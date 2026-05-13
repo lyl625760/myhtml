@@ -1,0 +1,369 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EP110 逐段讲解Kimi_K2报告并对照ChatGPT_Agent、Qwen3-Coder等：“系统工程的力量”</title><style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.9;color:#333;background:#fafafa}
+h1{font-size:1.4em;color:#222;border-bottom:2px solid #eee;padding-bottom:10px}
+.meta{color:#888;font-size:.9em;margin-bottom:30px}p{margin:.6em 0}
+.host{color:#1a6bbf;font-weight:500}.guest{color:#d4720a;font-weight:500}.speaker{font-weight:bold}
+</style></head><body><h1>EP110 逐段讲解Kimi_K2报告并对照ChatGPT_Agent、Qwen3-Coder等：“系统工程的力量”</h1>
+<div class="meta">主持人：<span class="host">小俊</span> &nbsp;|&nbsp; 嘉宾：<span class="guest">Kimi解读</span></div>
+<p><span class="host speaker">【小俊】</span>：Hello，大家好，欢迎收听张小俊商业访谈录，我是小俊。这是一档提供高密度信息的商业访谈节目。我们又来读论文了！今天我们要读的论文，是最近几个星期内最值得品读的几篇技术报告，分别是 Kimi K2、Claude Agent、Qwen3、Coded 的技术报告，以及 Manus 的一篇技术博文。它们的相关性在于，这几篇内容都和 Agent——也就是智能体——有关系。</p>
+<p>我们今天的嘉宾是俄亥俄州立大学的在读博士生郑博员，他的研究方向就是 Language Agent，也就是语言智能体。他会带着我们一起来阅读上述的技术报告和博文。这里是商业访谈录的"技术之美"系列，期待和你一起读论文、领略科技前沿、感受技术之美，做你的赛博助手。</p>
+<p>Hello，博员，先给听众朋友们打个招呼，并且做一个简单的自我介绍。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：Hello，大家好，我叫郑博员，是俄亥俄州立大学的第三年在读博士生，我的研究方向是 Language Agent，也就是智能体。</p>
+<p><span class="host speaker">【小俊】</span>：我们给大家介绍一下你个人研究的主线吧。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：我自己的研究，主要就是想把 Language Agent 这个东西真实地做出来。特别是能让 Language Agent 学会操控电脑，或者操控浏览器，能帮助大家完成一些日常的工作，起到一个助理的作用——我们现在管它叫 Computer Use Agent。</p>
+<p>形象来说，我的研究在于如何让这个 Agent 学会去感知环境、进而理解环境，在此基础上进一步生成动作，也就是 action，来和环境进行交互。</p>
+<p>一开始我们的难点在于，如何让这个 Agent 去理解互联网或者网络这样一个环境。那时候大家只有单一模态的 Language Model，Language Agent 只能去看 HTML 并且理解它，但这个内容非常冗杂。所以我就研究如何让 Language Agent 能够去理解 GUI 界面，进而更高效地理解环境并且生成 action。</p>
+<p>后来我发现，Language Agent 虽然能够理解环境，也知道在 GUI 上有什么样的功能，并且能够准确地用自然语言描述下一步是什么样的 action，但往往它并不能把这个 action 很好地转化成一个可执行的操作。所以我进一步做了一个叫 Grounding 的工作，能够让 Language Agent 生成的 action 准确地转化成一个 Program，并且在浏览器上进行执行。</p>
+<p>在这个基础上，我们逐渐能够帮助 Language Agent 在单一的步骤上做到很好的效果。但我发现，一旦让它做一些非常长、非常复杂的任务，效果就会变得差很多。随后我开始研究如何让 Language Agent 能够做比较长的规划和推理，并且提出了如何用 Language Model 内部的推理模型去辅助 Language Agent 做这种规划。</p>
+<p>我最近在 AI 公司实习，在研究如何用大规模的强化学习，把 Language Agent 的效果做得更强。</p>
+<p><span class="host speaker">【小俊】</span>：所以你研究 Agent 已经有几年了？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：从 PhD 开始就在研究 Agent，到现在刚好是第二年博士结束，差不多两年了。</p>
+<p><span class="host speaker">【小俊】</span>：好，那我们今天来聊聊 Kimi K2。Kimi 这篇技术报告是非常实在的，把很多 recipe，或者说各种小技巧都已经放在里面了。但我觉得，假如我们真的要把它做出来，用一种很高效的方式、高速大量地做出来，本身可能还是很难的。因为每一个部分去把这个 prompt 调好，还要包括各种参数调好，保证它能平稳运行、保证它有很高的质量，本身是一个非常大的工程量。这有点像是一个手艺活。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，就像是一个老师傅的活，研究员都是老师傅。</p>
+<p><span class="host speaker">【小俊】</span>：Agent 是我的另外一个大脑——一个专属的大脑。我日常做事情的时候，背后有一个军团在帮我做事情。我们能不能用 Agent 做一种方式，让它实现一种 self-improvement，也就是自我提升的能力？</p>
+<p><span class="host speaker">【小俊】</span>：我们今年讨论Agent非常的多，能不能请博元先给大家讲一讲，怎么给Agent下一个定义，并且给Agent做一个常见的分类？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：首先我觉得"Agent"这个词现在用得比较笼统，有各种各样的用途。但就我个人的认知，我会首先把它叫做"Language Agent"，因为目前大家的Agent都是基于一个Language Model去构建的，并且这些Agent之间会用语言作为沟通交流、推理和规划的载体。</p>
+<p>在这个基础上，关于这个定义有一个常见的问题：Language Agent和Language Model有什么核心的区别？因为它们看起来是非常相似的东西。我觉得核心其实就在于——这里是否存在一个"环境"。Language Agent需要学会很好地和环境做交互，具体体现在两个点：第一个点是它能够很好地感知环境，我们管它叫Perception；另一个点是它能够很好地生成并执行Action，从而影响环境。</p>
+<p>我们可以具体对比一下Language Model和Language Agent在训练以及推理时的区别。对于Language Model，它接受的是一个Input，然后输出一个Output，这个过程就结束了。但对于Language Agent，它的形式是这样的：首先，Language Agent会感知环境，从环境中获得一个Observation（观察）。这个Observation的类型会随着Agent所属的环境以及应用场景有所不同。比如说，如果是一个Coding Agent，它的Observation就会是整个Codebase代码库，以及当前执行的记录或环境的反馈；如果是一个Computer Use Agent，它的Observation就会是当前浏览器或电脑显示屏的GUI截图，或者对应的HTML。</p>
+<p><span class="host speaker">【小俊】</span>：我们今天的重点就是想给大家读几篇关于Agent的最近论文。好久都没有给大家读论文了。就在这两周，OpenAI、Kimi、阿里，包括前两天的智谱，都发了新的模型，他们都是在为Agent工作流而设计的模型。另外，Manus的首席科学家也发布了文章，讲述构建Manus的经验与心得。今天我们就想请博元来讲解这几个和Agent相关的技术报告和博文。延续我们之前的传统，我先来问博元几个问题，然后再把时间交给他。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：好的，关于我自己的背景，我即将开始博士第三年。我的PhD研究和我之前的经历其实有一个很有趣的衔接——我本科和硕士阶段研究的领域叫做自然语言处理中的"信息抽取"。这个领域想做的事情是：把非结构化的语言，比如我们平时日常的聊天或者一篇文章，通过一些NLP的技术，把它变成一个结构化的表述，比如整理成一张图或者一张表，然后在这个基础上进一步构建像ChatGPT这样的Agent。</p>
+<p>所以当ChatGPT出来的时候，我们整个研究发生了很大的变化。但我也在这个基础上发现，ChatGPT，或者说Language Model整体上，已经能够很好地作为人类语言和其意图之间的一个界面。所以我就开始想，能不能在这个基础上，利用这样一个很好的语言界面，去进一步做一些更难的、或者对人类更有帮助的事情。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后这个Observation会被作为模型的Input的一部分，会被送给Language Model去做处理。当然这个过程中还会有Agent需要去完成的Task，还有之前环境交互的内容。就比如说假如我们这个任务是让这个Agent去帮我们订一张机票，那么这个Task就是比如说订一张从北京到上海的机票，然后它之前的交互内容就是这个Agent之前已经执行过的操作，就比如说在输入框里输入什么样的内容。在这个基础上，这个Language Model会基于这样的一个Input随之对它进行执行，然后环境的状态也可能会发生变化，就比如说我们这个页面刷新了，或者是对于Coding Agent来说，我们获得了一个新的执行结果，它可能是有Bug，那我们就需要进一步去Debug、改变这个执行的结果。这个基本上就是我认知中对于Agent的一个定义。</p>
+<p>当然我觉得Agent它现在跟应用非常相关，我们也可以基于它应用的场景对它做一个简单的划分。就目前大家研究比较多的Agent主要分这几类：首先我觉得目前做得最成熟的应该就是Coding Agent，就比如说Cursor，还有前段时间那个很大的收购案里的Windsurf，它们里面都包含Coding Agent。具体来说这个Coding Agent是什么呢？就比如说我在写代码的时候给一个指令，比如说"请帮我写一个什么样的API接口"，然后这个Agent它会写一段代码，然后自己执行，执行之后看一下这个执行结果，如果有Bug的话，就自动去给它Debug，最后生成一个很不错的API接口。这个也可以拿来做Coding、做Debug一些有问题的代码。</p>
+<p>整体上我感觉这些Coding Agent现在效果已经非常强大了。就包括我自己写代码的时候，我觉得就像是不停地有很多实习生在帮我写代码，效果体验非常强大。甚至有时候我能同时开好几个Agent去帮我，比如说在三五个接口上同时做好几个任务，这个对生产力的帮助非常强大。</p>
+<p>然后还有另外一种比较强大的Agent叫Search Agent，典型的例子就是OpenAI的Deep Research，包括Gemini以及各种公司，他们都有出对应的产品和模型。这种Agent所做的事情就是给它一个指令，它们接着会对这个指令进行大规模的检索或者搜索。比如说我们给它一个指令像是"请调研一下当前市面上所有的GPU提供商，它们的价格、它们的策略以及能够提供多少GPU"，那么这个Agent就会先对Task做理解，然后再使用Google Search或者一系列的搜索引擎，或者通过访问一些URL进行大规模的搜索检索，然后生成信息，最后返回一个Report。我觉得这种Agent对于市场调研之类的场景会有非常强大的帮助。</p>
+<p>还有两类我觉得最近做得更多的Agent：一个是Web Use Agent，这也是我们这次会讲的Kimi K1.5，还有Claude 3.7，它们的实验中非常强调的一个场景；还有一个就是Computer Use Agent，像我们这次会讨论到的OpenAI的ChatGPT Agent、OpenAI Operator，它们是属于这个类型的。它具体做的事情就是给一个Task，比如订机票，或者说在网上预约一个餐厅之类的，然后这个Agent自己会生成一串的Action去完成这个任务。</p>
+<p>像这一类的任务，其实在一些相对比较传统的行业，就比如说RPA——流程自动化，像Salesforce这些公司，它们需要做的事情就是给一个固定的流程，然后需要手动写一串的Workflow去完成这个事情。但是现在有了Agent，或者是基于Language Model的一些其他Agent，我们可能能够完全自动化地做这个过程，所以就不需要大量的工程师来手动写Workflow，反而是可以用一个Agent自动地把这个过程全部完成。所以这对RPA这个产业也可能会产生一些影响。</p>
+<p>所以我觉得这几个Agent应用场景的不同会有很大的区别，但从它们的任务建模上来看，它的区别主要在于它的Observation Space，就是观察空间。</p>
+<p><span class="guest speaker">【Kimi解读】</span>比如说，Coding 是 Code Agent，Search Agent 是一个 Text Browser，Computer Use Agent 是一个 GUI 的 Browser。它们的 Action Space 也不一样：像 Coding 的话，它的 Action 就是生成一串代码或者修改一串代码；而 Computer Use Agent 就是所有的浏览操作，比如说点击、或者在某个输入框里面输入什么内容。</p>
+<p><span class="host speaker">【小俊】</span>具体来说，这次的 Kimi K2、Kun、San、Coder、Cognify Agent，以及应用公司 Manus，它们之间的技术方案有差异吗？</p>
+<p><span class="guest speaker">【Kimi解读】</span>有的。我觉得可能比较大的差异，还是 Manus 跟其他几个模型之间的不同。就像 Manus 在那个 Blog 里面提到的，这个区别就在于：我们是否利用这个模型的 In-context Learning 的能力，还是从头 End-to-End 地去重新训一个 Agent。</p>
+<p>Manus 就属于非常详尽、非常精细地去利用好了语言模型 In-context Learning 的能力。它们里面不太会涉及到模型训练，但是可以通过很好地调节 Prompt，以及设计一些 Multi-Agent 的系统，能够非常快地迭代，做出一个能够让大家直接拿去用的产品，并且能快速地做迭代。</p>
+<p>这种方式下，它非常容易迭代，能非常容易地调节 Agent 的各种能力，并且能很好地做 Multi-Agent 的场景。比如说，当我们设计这个系统的时候，我们会认为有不同的角色、不同的 Model，在里面承担不同的职能。就比如说我们要写一个网站，那么不同的语言模型或不同的 Agent 就有不同的职位：我可能会需要一个"产品经理"角色，很好地去设计这个网站的外观，或者它对用户来说有哪些比较重要的属性和 Feature；同时还会需要一个很会写代码的 Agent，比如说现在大家一般会用 Claude；在这个基础上，可能还会有一个专门来 Debug 的 Agent，或者是来评判代码写得怎么样的 Agent。所以这是一个 Multi-Agent 的系统。</p>
+<p>这种 In-context Learning 的范式让这样的操作非常方便，同时现在不同的模型可能有不同的长处，所以基于这个方式能够很好地调出一些很好用的产品。</p>
+<p>但是，如果我们有一个非常明确的场景，比如说 Coding 或者 Browsing、Computer Use，那如果能专门训练一个模型或 Agent 出来，它会变得更加强大。</p>
+<p><span class="host speaker">【小俊】</span>那端到端训练的模型呢？</p>
+<p><span class="guest speaker">【Kimi解读】</span>端到端训练的模型，如果我们能以某种方式很好地获得大量的 Reward Signal，或者大量的 Training Data——我们一会儿讲 Kimi K2 的论文会讲到——那我们就可以在某个特定场景下训练出一个非常强大的 Agent。它的好处在于，在某个特定场景上会非常强大。</p>
+<p>但是我觉得，目前这种端到端训练的方式，如果要做 Multi-Agent 的话可能会相对难一些，因为数据可能会相对比较难获得。如果我们要训这样一个 Agent，数据上面需要两方面：一方面是一些 Synthetic 的数据，就是这个 Agent 的 Action 和 Environment Feedback 相互交叠的数据；而一旦到了 Multi-Agent 的场景下，这种数据将会非常难生成或者非常难获得。</p>
+<p>当然，我们可以用 RL 训练，也就是强化学习——给它一个任务，然后这个 Agent 去做探索，最后评判它是否成功。但这样的话，在 Multi-Agent 的场景下，它的执行轨迹会非常非常长，而且里面多个 Agent 每个都有自己的身份和角色，那我们就很难分清楚最后的 Reward 应该归属于哪个 Agent，以及应该怎么把训练信号传导回去。</p>
+<p><span class="host speaker">【小俊】</span>为什么我听到大家对于 OpenAI 的 Agent 整体是比较失望的？整个 AI 社区对它的评价是什么样的？</p>
+<p><span class="guest speaker">【Kimi解读】</span>对，这次……因为我前段时间刚从 ICML 回来，ICML 上大家讨论得非常多。我觉得大家的反馈可能根据不同的……</p>
+<p><span class="guest speaker">【Kimi解读】</span>大家不同身份会有不同的感受。就是做科研的朋友们，比如像我这样的PhD，还有一些更senior的研究人员，大家会有一种"松了一口气"的感觉。</p>
+<p><span class="host speaker">【小俊】</span>松了一口气？</p>
+<p><span class="guest speaker">【Kimi解读】</span>对，松了一口气。因为我们一直会担心，哪天OpenAI或者Google，他们可能一次性通过scale up这种RL training，或者是scale up在环境里面的exploration，能够在一定程度上把这个问题变成一个"wild solved"的问题。因为这种事情其实已经发生过几次了——就像我前面提到的2022年ChatGPT的冲击，基本上把NLP的很多小方向给干掉了，比如说我自己以前的研究方向。我们发现大规模的训练有时候能够把一些细分的小任务很大程度地解决掉。包括后来OpenAI发了GPT-4V，这个vision模型把多模态这边的研究又很大程度上影响到了。然后我们看到ChatGPT agent，也就是OpenAI他们的agent，主要是Operator和Deep Research，像这种方式下面能看到可能会有比较明显的scale up方案，能够很大程度上解决这个问题。所以大家都有点提心吊胆。我当时就感觉，如果他们一下子发现特别强的agent，可能对研究方向会有比较大的转向。但我觉得这个问题确实会比较难以解决，所以里面还有非常大的空间可以去探索。</p>
+<p>然后除了research之外，另外还有startup，就是创业公司，他们极其兴奋，甚至很多人在做一些有趣的小demo、小视频，把他们自己的agent拿出来跟OpenAI的ChatGPT agent做对比。比如说我看到一些很有意思的视频或demo，他们搞了一个类似"斗兽场"或者像足球赛一样的形式，在一个显示屏上开两个框，左边是他们自己的agent，右边是ChatGPT agent，然后两边同时开始做ChatGPT agent里面展示的同一个task，主要是flight booking。因为其实可以很容易地通过收集一些领域内的数据，或者做一些特定的prompting，让这个agent很擅长做这件事。然后就看他们不停地解说："ChatGPT agent现在还在执行这个操作，但是我们的agent已经完成了！"就是这种感觉。所以整个startup那边就特别开心，因为这可能证明这个问题比较难解决，里面还有很多探索空间可以做，对他们融资或者产品都会有很大帮助。</p>
+<p><span class="host speaker">【小俊】</span>相比来说，国内为什么这次反响比较大？以及像阿里、千问和Kimi发布的这个agent模型，他们的相似和不同是什么？</p>
+<p><span class="guest speaker">【Kimi解读】</span>对，我觉得Kimi这次release的时间真的非常非常好。这应该是比较早的一个、比较focused关注在agent能力上的模型。当然之前有很多模型，很多language model里面已经包含了这样的agent能力，但这次Kimi在官方宣传上也主要强调这是一个"open agentic intelligence"，他们的paper title就是这样写的。然后正好最近大家对agent的能力比较感兴趣，agent本身也比较受欢迎，所以一下子就非常热门。</p>
+<p>另外一个是，我觉得这个模型本身已经足够强大了。因为现在整个预训练数据方面，Kimi或者千问他们已经有很大的积累，内部有大量数据，再加上各种训练算法或者架构上的成熟，它本身能力非常强大。我整体使用的体验，就是一个小一号的GPT——一个完全开放的、小一号的GPT。这样相当于大家就可以免费获得一些非常强大的agent了。然后我觉得大家可能拿这些模型去做一些小应用，比如说写一些网页前端之类的，会发现它效果确实很不错。</p>
+<p><span class="host speaker">【小俊】</span>所以我覺得這次這可能是比較受歡迎的一個原因，因為Agent從大腦走出來，要跟世界發生交互了，甚至和物理空間發生交互。那你覺得Agent的安全問題，是值得更多考慮的嗎？</p>
+<p><span class="guest speaker">【Kimi解读】</span>對，是的，我覺得這個是非常重要的一個問題。我其實正好昨天剛released了一篇論文，就是在研究這個問題。</p>
+<p>首先我想先講一下，為什麼Agent Safety會有這樣的影響。Agent它執行的action，可能對世界會產生一些難以逆轉的影響，這個也取決於Agent的類型。比如說如果是Deep Research這個類型的Agent，它可能只是在網頁上做「讀」這個操作，所以它不會對這個世界、或者對網站本身產生影響，這是非常安全的。就算它生成了一些很離譜的action、做一些很奇怪的事情，也不會對別人產生影響，所以完全沒有問題。</p>
+<p>但是如果我們看到Computer Use Agent，比如說Operator，那它可能是實實在在地在影響這個世界。我自己有一個親身的例子——大概一年半之前，當時我做了一個工作叫TheAct，應該是當時市面上相對最早一個把Web Agent真的在live website上跑起來的Web Agent。這個Agent跑完之後我在做demo，有一個demo的任務就是說：幫我在特斯拉的某家門店訂一個試駕。我做這個demo的時候其實沒有特別在意，但這個Agent它真的做成了。做成之後我一開始也沒在意，然後隨後聖誕節的時候，它就不停地給我發郵件，說「你是時候來提車了」。</p>
+<p>這可能是一個很簡單、看起來影響力不是很大的例子。但是假如我們開的不是一個Agent而是一千個Agent，那就相當於有一千個Agent在重複地做類似的事情。假如所有Agent都在給同一家門店訂試駕、或者給它發送請求，那這可能就是一種智能化的、Agentic的DDoS攻擊，對互聯網的安全性可能會產生比較大的影響。</p>
+<p>而且我覺得，Agent的自動性在給我們提供便利的同時，也會帶來很多其他的危險。比如說你讓Agent幫你訂機票、或者下單買一些東西，比如咖啡機，或者去購買一些有限量的商品——假如它一個不小心，下單了一噸的鮮肉，或者買了一千杯咖啡，或者不小心給別人發了一封比較粗魯的郵件，像這種情況就會非常危險。</p>
+<p>所以我們可能需要更多地去想辦法，去控制Agent本身的行為。比如說我最近released的這個work，就是我們想要建立一種guardrail——在Agent執行這個action之前，去判斷一下它對這個世界、對別人的影響有多大，如果影響超過一定程度，就把這個action先停下來，然後提醒一下user：「你確定要不要執行這個action？」</p>
+<p>這有點像自動駕駛那邊的邏輯——一方面是真的確保它的安全性，另一方面也解決責任問題。因為只要user approve了這件事情，那麼責任就可以轉移到user這邊，所以對於做這個Agent、或者讓它商業化，會相對更穩妥一些。</p>
+<p><span class="host speaker">【小俊】</span>我們一會兒講paper、看到Kimi K2的時候，可以看到他們也花了很多精力去研究Agent Safety這個事情。然後包括OpenAI這次，他們跟Square那邊有一個interview裡面，也提到了很多safety相關的內容。那好奇一下，訓練Agent和之前訓練Chatbot，有什麼不一樣嗎？能不能對於訓練Agent的一些方法做一個概述？</p>
+<p><span class="guest speaker">【Kimi解读】</span>我覺得Agent這邊的訓練，主要在於——一方面是獲得大量的synthetic data，這個data是一些trajectory。具體來說，就是我們需要通過大量的Agent風格的數據，教會Agent如何和環境交互。</p>
+<p><span class="host speaker">【小俊】</span>就像我们前面提到的，这个agent跟环境交互或者生成action的过程大概是：首先我观察环境，获得一个environment observation，可以是screenshot、HTML或者不同的环境；接下来基于这个observation生成一个action，随后执行、获得环境的反馈，然后循环往复地做这个事情。</p>
+<p>如果我们要训练一个agent能很好地做这个事情，我们需要大量的各种类型的数据，比如说action相互交织的数据。但是这种数据在自然的预训练数据里面，它占的比例应该是比较小的——当然肯定是有的，也可以通过各种方式让language model本身拥有这样的能力，但是目前这些数据不足以构建一个足够强大的agent。所以我们需要想办法去生成大量的相关trajectory，或者人工标注一些数据。我们一会儿讲Kimi K2的时候，可以看到他们花了很多精力做这个事情。</p>
+<p>另外还有一个很重要的训练方式，就是RL强化学习。这个是最近我觉得非常promising的一个方向，我自己本身也在研究这个事情。RL它可能是一个更容易scale up的方案——因为相比于前面data synthesis的trajectory，在做RL的时候，我们只需要一个agent需要完成的task，还有对应的一个verifiable reward，来决定这个task有没有完成。在这个基础上，我们可以让agent自己去探索、自己去尝试，然后给它reward，告诉它成功还是失败。这样agent在训练的话，他可能能够更容易地做大量的scale up，充分利用他的compute，能让agent能力变得更强。</p>
+<p>那下面我们把时间交给博元了，他会重点解读K2的技术报告，对比穿插OpenAgent、Kimi K2 Coder，并且还有Manus的博文。这是全球AI社区在过去几个星期里最值得品读的几篇技术内容。我中间会作为观众视角提问，可能在中间也可能在最后。那博元，你来吧。</p>
+<p><span class="guest speaker">【Kimi解读】</span>好的，谢谢小俊。那我们现在开始读这个论文，你投一个屏给我们看。</p>
+<p>好，那我就开始读这个Kimi K2 Coder的这个paper了。我觉得很多paper里面涉及到data synthesis、AI，或者很多技术都是共享的，就是在几个work之间都是共享的。所以我讲的形式可能会——我想先总结一下每一个部分他可能面临的主要难题，还有可能一些潜在解决方案，然后我们具体延伸到这个paper里面，看他们是具体怎么解决的。</p>
+<p>好，我们在展开之前，我想先整体快速地过一下这个paper，还有他们的主要contribution。这个Kimi K2这个paper，我们看它的title也很有意思——"Agentic Intelligence"，也是比较早地去claim这是一个agentic模型。</p>
+<p>我们可以先看到他们主要的三条contribution：第一条是这个MuonClip——MuonClip是一个新的优化器，Kimi是非常早地去尝试使用这个Muon优化器的……</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后去做training。当然这次训练的时候，他们发现这个效果非常的好，那个training curve看起来非常的优雅。当然，Chemist我觉得是很早就去做各种最方便且innovative的尝试的，之前也有一些其他paper去做这个事情，我觉得这个是非常值得尊敬、非常牛的。不过整个这个optimizer可能跟agent的能力是一个相互正交的关系，所以呢，我们这次会更侧重于讲后面这两个部分。</p>
+<p>接下来两个部分，我觉得是这个agent的核心，是一个agent模型的核心。可能归根结底最后还是data，然后IL本质上也是一个data的问题。所以我们看到第二个contribution，就是它propose了一个large scale的agentic data system-side pipeline，能够系统性地生成这种to-use的data。他们同时呢，不仅是在仿真环境里面，也在真实世界里面获得这种data，我们一会会具体讲到这个内容。</p>
+<p>第三个contribution，就是一个general的reinforcement learning framework，就是教我们大家如何结合——用verifiable reward，同时加上self-critique rubric reward——很好地用IL来训练这个模型。然后关于这个rubric reward，最近也有很多工作在进行，不展开。前段时间Scale AI有一篇paper叫Rubrics and Reward，标注了大量的这种数据。可能最近也有一个潜在的趋势，就是大家更多的从标注这种SFT的input-output data，转向于标注某个task再加上verifiable reward，或者是rubric reward的这种方式，可能是一个新的data annotation的新方向。</p>
+<p><span class="host speaker">【小俊】</span>OK，行，那我们接下来再往下。我们可以简单先过一下pre-training这块。</p>
+<p><span class="guest speaker">【Kimi解读】</span>pre-training这边呢，我觉得除了这个optimizer，他们也涉及了一个data synthesizer的方案。因为这是我们大家众所周知的——现在这个language model的发展，逐渐没有之前那么快，我们管它叫pre-training wall——一个核心的原因就是data基本上快被用完了，就是整个互联网的数据基本上都被爬光了，对数据的供给形成了瓶颈。</p>
+<p>但是我觉得agent他可能潜在地有可能能够一定程度上解决这个问题。因为如果我们看一下agent的范式——他在每一轮的交互过程中，其实都在观察新的数据，都有新的数据进来——因为我们执行action、observe环境、执行action，然后根据feedback再执行。在这个范式里面，agent这个系统不是一个封闭的系统，就和RLHF那样只是训练一个preference不同，agent这种multi-turn RL的setting——</p>
+<p><span class="guest speaker">【Kimi解读】</span>它是不停地会获得新信息。假如我们有一种方式，能很好地把获得进来的信息进行整理，把它整理成一些knowledge——比如说从里面抽取一些有用的procedure或者一些fact——那么也许这种RL做chaining of agent，或者agent本身，他能够成为一个新的data engine，进一步去empower language model本身。但是这个还在探索，可能不一定特别严谨，但我觉得是非常exciting的研究方向。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后进一步回到这个paper本身。这边这个curve，我们可以看到是前面提到的multi-organizer的curve，看着非常舒服，非常丝滑。然后我们再往下看到这个data部分——就是这边是这个生成data的过程。他们这边data总体上来说，就是用一个现有的language model（这边应该是Kimi K1.5），对现有的数据进行重写、然后筛选，从而获得不一样的data，是一个data synthesis的过程。</p>
+<p>我们具体来看一下它是怎么做的。首先，输入的数据是这种knowledge data，比如说维基百科，或者是一些书籍，或者是知识密集型的一些文档。然后他们这边做的事情——我们看到这个"style and perspective diverse prompting"——他们基本上就是自己弄了一大堆prompt，来控制重写这个数据的风格和角度，通过这种方式能获得更多样化的数据。</p>
+<p>但是在这个重写的过程中，我们不可避免地会发现，有些数据它会hallucinate，就是出现这种幻觉的现象。就算只是重写一篇文章，它可能一不小心把里面某个相关的细节给改掉了。所以他们接下来提出了两种trick、两种方案，来尽量减少幻觉的情况，保证数据的质量。</p>
+<p>第一个叫**Chunkwise Auto-Reversal Generation**，基本上就是说把大文章切成一块一块的，然后每一块分别改写。因为如果改写短文章，就更容易控制质量，保证原来没有知识性冲突。举个例子——就好比小学初中重写论文，假如我们有一篇一万字的论文，老师让我们重写一遍或者复述一遍，很有可能某些细节就会记错。比如说这是一篇小说，里面某个人物在壁炉前喝咖啡或者喝茶，我可能就不小心写成他在壁炉前吃烤肉或者吃面包——这种知识性错误。而这种小的错误，很有可能潜在地影响文章整体知识的准确度。如果有这种错误的文本出现在预训练数据里面，就有可能导致模型的幻觉现象变得更加严重。所以我们需要做这种Chunkwise的改写生成。</p>
+<p>我们可以看到，这个是整体的pipeline——</p>
+<p><span class="host speaker">【小俊】</span>：就接著一块一块，然后 otherwise 有的进行重写，然后在这个基础上，long context 的影响智商，对吧？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，我觉得是的。就是因为很难去完全 attend 到这边所有的 token。</p>
+<p><span class="host speaker">【小俊】</span>：然后对，就是我之前很早有一篇 paper，是 Nelson 他们发的，叫《Lost in the Middle》，就是 context 变长了之后，各种 performance 会变差、受影响。然后我发现在 Agent 里面可能也是有这个问题——就是当这个 Agent 跟环境交互多了、前面的部署多了之后，我觉得整体会变得笨一点。就是他可能记了他的东西，在内后……</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，但这个是比较意识流、开玩笑的一个说法。但我觉得整体上是他的 context 里面塞了越来越多东西，导致他这个 attention 不能很好地——在一定程度上——放到我们需要的内容上。当然，Manus 他那个博客里面也提到了这点，我们一会儿可以问一下，看看他们是怎么从工程上解决这个问题的。</p>
+<p><span class="host speaker">【小俊】</span>：Chunk-wise generation 这边结束。他就是通过这种方式，一定程度上减少他的这个换式，或者是常性错误。但是我们没有办法完全保证他是不错的，所以我们要再加一个 fidelity verification 的部分。这边基本上就是另外一个模型，或者是比较 rewrite 过的这个文章跟原来的这个文章，它之间有没有常识性的错误。然后这边可能也是拿一个模型给他重新检查一遍，然后通过这个过程，就把错误的数据给他去掉。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：然后经过这三步这样一个 pipeline，我们就可以得到大量的重写过的 knowledge-related data，然后用来做数据的增广。</p>
+<p><span class="host speaker">【小俊】</span>：那么接下来我们就有一个问题——这个生成的新数据，效果怎么样呢？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：我们这时候就可以看到这个 Table 1。就是他们非常——就是 Kimi 这边，团队做了很详细的 case study 去研究他的效果怎么样。我们具体来解读一下。</p>
+<p>实验的 setting 是这样的：evaluation 是在 SimpleQA 这样一个 QA 的 dataset 上做的，然后用 accuracy 来做 evaluation。他们这边的不同呢，就在于他们预训练的这个 Wikipedia data，有没有经过这套 pipeline 重写，以及有的话重写了几遍。他们这边比较了三个 setting：</p>
+<p>最简单的 baseline，就是说我完全不重写，但是呢我把这个数据喂给这个模型训练 14 次，这样得到的最后结果就是 23.76。</p>
+<p>然后在这个基础上，他们再做了一个事情，就是把这个重新写一遍，然后再 Wikipedia 上的这个 performance 提升了很多。</p>
+<p>然后再进一步做一个更激进的方案，就是我把这个文章重新写十遍，然后把十份——就是把重新写的文章全部混在一起再去训练，这个效果就进一步提升了。</p>
+<p><span class="host speaker">【小俊】</span>：然后他们在这个 paper 里面提到，这样一个 pipeline，对应的 recipe 在很多的 design 上都是 work 的。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：然后这一部分就是数据重写的第一部分，主要针对知识密集型的数据。接下来呢，还有一个——在 mathematical data 的 rephrase，就是那种数学相关的文档。</p>
+<p><span class="guest speaker">【Kimi解读】</span>这边他们具体做的事情是什么呢？就是把一个高质量的数学文档，把它重写成一个 Learning Notes 的格式。像这个是 FolkSolo Math 这个 paper 里面的方案。</p>
+<p><span class="host speaker">【小俊】</span>我觉得这边可能有一个形象化的理解，就是说像是费曼学习法——就是我们自己学完东西之后，如何检验我们是不是真的已经学会了，或者是如何更高效地学习。就是我们学完之后再教别人，怎么去学这个内容。那一旦把别人教会了，那我们可能就真的学会了这个内容。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后这边的 Learning Notes 也是类似的一个形式，就是一种更密集型的、或者是重写过的一个格式，然后通过这个方式去增广它数学相关的数据。这两部分就主要是它在预训练阶段的数据增广或者重写的一个过程，通过这种方式来缓解数据稀缺的这个问题。</p>
+<p>然后接下来我们可以简单过一下它的模型架构。它的 architecture 其实没有特别大的不同，基本上是在沿用 DeepSeek V3 的架构。这边团队的作者们也提到，之前做了不同的尝试，但是发现 DeepSeek V3 这个架构本身优化得比较好，所以他们就直接沿用了。</p>
+<p>不同的地方在于换了不同的 experts 数量，以及 attention head 的参数，还有 dense layer 的参数，就是在技术上调了一些超参。</p>
+<p><span class="host speaker">【小俊】</span>我觉得他们直接沿用 DeepSeek V3 这个架构，对于 inference time 的效率，或者是用户使用这个模型，也会有很多便利。因为开源社区，比如说 vLLM 或者 SGLang，他们本身在做 inference 的时候，对 DeepSeek V3 这个架构已经做了大量的优化。如果直接 follow 这个架构的话，他们自己做 inference 的时候也会更便利，效率更高。</p>
+<p>我觉得这边也是开源的一个好处——就是如果你开源了，把很多细节放给社区，然后就会有大量来自世界各地的博士们，或者各种各样的人，自发地去优化这个架构、提供各种服务。感觉就像是免费雇用了一大批工程师。</p>
+<p><span class="guest speaker">【Kimi解读】</span>对，架构上基本上和前面是差不多的，创新不多，还是沿用 DeepSeek V3。当然他们也会有很多优化，包括 training infra 之类也会有各种优化。不过因为我们这次主要是讲 agent，我们可能会更多地关注在 agent 这个事情上。</p>
+<p>好，这边主要就是预训练这一部分。接下来我们开始进入 post-training 的部分。我觉得这部分是跟 agent 能力最相关的一部分，我们可以非常详细地讲一下——一个是它的 data synthesis pipeline，还有后面 RL 的部分。</p>
+<p>我们先进入它的 data synthesis 部分。这边也提到他们是用模型自身做的训练，包括后面的 RL 他们也是一致的。然后他们这边强调了一下，他们的核心在于——一定要把这个 data 变得足够 diverse。</p>
+<p><span class="host speaker">【小俊】</span>包括我自己在做实验的时候也发现有类似的现象。就是 agent 的 data 如果从头生成的话，自动生成的话，很有可能它的 diversity 就会受到各种局限。比如说我在一个 web 环境里面去生成数据，让 language model 自己去 propose agent 要做的 task，那很快它的 diversity 就会到达上限，因为它观察到的数据是很有限的。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后同时，这个事情本质上是在用language model本身去sample一个task。但这样就很受它原来这个模型内部的prior的影响。所以这边有一个核心，就是采用各种各样的方案，去让这个数据变得非常多样化、非常diverse。后面可以详细看看他们究竟是怎样实现diverse的data的。</p>
+<p>接下来我们进入3.1.1——Large Scale Data Synthesizer for Tool Learning。这边分成三个部分，我们可以从Figure 8里面看到。第一部分是生成一个tool spec generation，基本上就是说我们生成大量的MCP tool，做一个tool use的tool。然后在这个基础上构建各种各样的使用场景，生成进一步的data。接下来是agent task generation，他们这一步就从所有的tool里面sample一些subset，然后每一个都构建对应的任务和一个使用场景。最后基于agent和task去生成trajectory。</p>
+<p>接下来我们开始进入第一部分，就是如何生成、收集这个tool。他们这边做的事情，第一步是在GitHub上收集了大量的MCP tool use。这边我们插入一下相关背景——MCP叫做Model Context Protocol，是Anthropic提出的一个东西。基本上就是规定好一个标准的协议，让LLM和agent能以更规范的方式去使用这个tool。</p>
+<p>我觉得MCP的出现为这种tool use research——包括data synthesizer和LLM训练——提供了很多便利。因为如果是以前没有MCP的话，我们可能直接去call API、使用API，但是参数、接口都非常不统一。如果真的要做这个事情，就会花很多很多精力去对接接口，做非常多的engineering、工程化处理。但如果是MCP的话，这边都非常方便，都是统一化好了的。而且MCP这个生态也非常丰富，所以这边一共收集了3000多个工具。</p>
+<p>另外我觉得，最近这些新出现的MCP工具，它们或多或少本身都带有一些应用场景，或者说有一些应用价值和应用意义。所以这边MCP tool的质量，也相对比凭空去爬API的质量会更高一些。</p>
+<p>接下来我们可以看到左边，他们对爬到的、拿到的这些MCP tool做了一个visualization，用t-SNE做了一个可视化。我们看一下——可以看到左边这个tool里面，每一个不同颜色的点，都说明是不同的领域或者不同的类别，一个点就是一个tool。但我们可以看到它非常稀疏，在这个tool空间里零散地分布着。我们可能想让它变得更密集一点、更稠一点，多增加一些工具，多增加一些领域。</p>
+<p>所以这边就开始进入第二部分，如何系统性地去扩展工具——involve this systematic tool——通过这种hierarchical domain generation的方式生成更多的tool。这边这个方案是用一个LLM作为data synthesizer。根据这边的描述——这边描述没有具体说清楚——就是这边所谓的tool synthesize，究竟指的是重新生成一个MCP，还是对现有的MCP做组合，然后生成新的MCP的interface、description，或者是它操作的逻辑。但是根据这边context以及这篇paper……</p>
+<p><span class="guest speaker">【Kimi解读】</span>我的猜测应该是，他们对原来的MCP实际上做了一定的组合，并且对新组合之后的MCP重新写了它的工具接口，然后包括它的描述，以及它的操作逻辑之类的。然后我们可以看到右边这个图，就非常稠密了、非常多。所以通过这两个方案、这两步，我们就可以生成大量的工具。这边总共第一步有3000多个，第二步有2万多个，这样我们就获得了一个超级大的tool use动作空间。</p>
+<p>然后接下来，他们涉及到一个叫做agent diversification的过程。具体他们做什么呢？首先，他们通过生成大量的system prompt，来在不同的场景上创造各种各样的agent。这个system prompt本身是放在language model里面，用来定义这个agent行为的一些prompt。比如说，它会有什么样的能力，它会有什么样的expertise——有的擅长写代码，有的擅长做数据分析，有的擅长做项目管理，或者有的情商比较高之类的，还有它的行为模式之类的。</p>
+<p>然后这样的话，我觉得这个过程本质上是在为下游用户的应用场景创造一些模拟场景。比如说，假如我现在从这2万多个MCP tool里面随机抽取10个，那我就会进入一个场景——在这个生产场景里面，我有10个工具，然后我可能会在这个场景下面有各种各样的任务，在这个基础上我自己这个agent又会有什么样规定的行为。那这样的话，我就可以在data synthesis的方式下，不停地去逼近下游应用场景，这样我们下游使用这个模型的时候，它也会更加自然。</p>
+<p>同时，我觉得这个也是保证数据非常diverse的一个方案。就是类似于，假如你很笼统地跟language model说要使用某个工具，它未必能生成非常diverse的数据；但是假如你把这个context放在这里，让它知道自己的role，让它生成的数据质量就会相对更好一些。</p>
+<p>然后到这边结束，我觉得就相当于是我们定义了这个动作空间，然后创造了各种各样小的tools environment，还有对应的system prompt。然后在这个基础上，我们要在某个小的environment里面去生成对应的rubrics还有对应的task。这边这个rubrics具体指什么呢？就是说，它相当于是一个——</p>
+<p><span class="guest speaker">【Kimi解读】</span>我们的描述，就是描述这样一个task什么时候是完成的。那么这个rubrics的作用，我们后面可以看到，是用来对生成的trajectory data进行筛选。因为我们不能保证一个task一定会被完全完成，所以我们具体来看一下这一段是怎么做的。</p>
+<p>首先，他们针对每一个agent的configuration——就是system prompt还有对应的tool——从里面生成了这个task。这个task，比如说我来举个例子：假设我现在写了10个用来做市场营销或数据分析的MCP，然后在这个情况下，我还生成了一个system prompt，就是说"你是一个做数据分析、市场调研的专家，你需要做什么事情"。然后在这个情况下，我们再用一个language model，基于这个configuration进一步生成——在这个场景下面我可能会需要做什么事情。比如说，可能是调研一下市场上所有水果的市场行情，或者GPU provider、GPU供应商的价格情况，或者市场的变化。</p>
+<p>这样我们就可以基于各种场景，生成大量的相关task。然后这边他们还提到做了一个simple to complex的操作，就是逐渐提高生成的难度，这样能够确保一方面生成的质量，另一方面确保它生成的diversity，让它更多样化一些。</p>
+<p>同时，他们在生成某个task的时候，也同步把这个rubric生成出来了，可以指定它成功的标准、预计的tool use模式，以及做evaluation的checkpoint——就是到哪个节点算完成了多少，最终成功的条件是什么。他们这种把task和rubric同时生成的方案，从实验效果上来说一般会更加准确一点，因为你在生成task的时候，就能够预测到后面evaluation时可能会有什么样的标准。</p>
+<p>后面在data filtering、也就是筛选数据的时候，会再次提到这个rubrics。</p>
+<p>好的，那么接下来就是multi-turn trajectory generation，也就是开始真正生成trajectory的数据。他们这边有两个部分，第一个叫user simulation——</p>
+<p><span class="guest speaker">【Kimi解读】</span>它是拿一个LLM去生成了一个user persona，也就是一段描述人的性格或属性的文字。比如说我的persona，可能就是一个理工大学里研究AI的PhD学生，有什么样的爱好等等。但是我们在下游使用的时候，会有各种各样的user——有的人是产品经理，有的人是律师，或者是一个处师——大家都会有不一样的交流需求、交流方式，以及完成任务的倾向，也就是各自的preference。所以我们通过这种方式，也是在模拟下游应用的场景，能让这个agent的performance跟下游更接近。</p>
+<p>同时我觉得，加入这种persona也是保证数据diversity的一个方案。因为通过这种方式，在让LLM生成trajectory的时候，就是在跟各种各样的communication distribution做交互。这种用persona来提高数据diversity的方案，在很多地方也都出现过，从实验上来说确实是一个很好的方案。</p>
+<p>然后再往下，会有一个tool execution environment，这个具体是干什么呢？就是说我们有了user，也有了agent，接下来就需要真的去执行，看一下它得到的environment feedback以及更新的observation。所以他们这边做的一个事情，是建立了一个tool simulator。这边说它equivalent to a world model，但没有详细说明这个simulator究竟是什么样的。我这边有两个猜测：一个是它可能真的是neural network，就是用神经网络或者某种信号模型来做这个模拟器，通过这种方式大量提供执行结果；另一个是他们建立了某种沙盒，就是在本地建一个小环境来提供simulation。但根据描述，可能倾向于是前者。</p>
+<p>不管怎样去优化这个simulator，这个world model，它可能还是跟真实世界会有很大的出入，所以这里面可能会产生一些噪音，数据不一定完全真实。所以重点他们也提到了，是一个hybrid approach——不仅需要有仿真数据，也需要有跟真实环境交互的数据。这边我觉得描述相对比较模糊一点，听众朋友们也可以自己去看一下这篇paper，看看你们认为这边的实现方案是什么，可以给我们留言。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后接下来，我们会有一个quality evaluation and filtering的部分。就像我们前面提到的，它身上有这些rubrics，我们也不能保证每个trajectory都是成功的，所以我们就会有另外一个部分……</p>
+<p><span class="guest speaker">【Kimi解读】</span>就是拿这个Rubrics，由Language Model去判断这个task有没有成功被完成。如果成功了，就把这个数据拿进去；不成功的话，就改写或者直接扔掉。到这一步，我们就获得了足够的synthetic data。</p>
+<p>然后接下来，就像我们上面提到的，是一个hybrid data synthesizer的过程。那为什么会有hybrid？为什么要hybrid？因为我们这边可以拓展讲一下，这个simulation跟reward之间的一种trade-off。</p>
+<p>就是我觉得现在对于agent来说，一个很大的难题是怎么让和环境的交互变得很高效，并且把成本给降下来。我们在做research的时候，学界可能会在一定程度上低估跟环境交互的这个价格，但实际上它是超级贵的。</p>
+<p>比如说，假如我们synthesize的场景是做deep research search agent，那这个过程如果是真实的环境，我们就会调用search的API，而这个API是收费的，不是完全免费的。因为里面比如说用Google的话，就要用到他们云端的算力，还有他们自己给这个internet做的index，这些都是收费的。就算很便宜，就算是一分钱一次，但如果我们是做deep research search，它会有大量的search的call，一个不精准的估计可能就是100次到150次左右，那这个价格也不少了。我们做training的话，需要有大量的rollout，就会产生大量的搜索，这里面就会有很高的成本。</p>
+<p>然后在browser这边，也就是computer use这边，这个价格可能更贵。因为我们是要真实地跟website server还有browser做交互。那这样的话，假如我直接把我的web agent在某个网站上跑，跑多了，可能我的IP地址就被封掉了。这是很真实的事情。比如说我公寓里还有实验室里，我的电脑硬件的IP被封掉了，包括我们实验室大家跑实验，在一定程度上也把学校那个cluster的IP给跑封掉了。这是一个很普遍的现象，很多做web agent的朋友都反映过这个问题。</p>
+<p>所以现在一个方案就是用一些cloud browser，就是云端上的浏览器来做这个事情。这样他们有自己的一套IP address，还做了大量的工程优化工作去防止IP被封掉。但这个收费就特别贵，这些browser-based的公司融资也拿了不少钱，可能就是通过提供这种service来赚到非常多的钱。</p>
+<p>有一个大概的估计，就算是100k的rollout，也就是生成100k的trajectory，光靠这个交互可能就要花好几千美元了，这个价格也是很恐怖的。</p>
+<p>当然，我们也可以在本地去host这个sandbox，就是isolated sandbox——开一个Docker，里面搭一个website的前端后端，然后跟它做交互。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：但这个本身的CPU或者是Memory的cost也会很高。然后一旦我们大量开出这种sandbox、grow environment，对这个环境本身来说也是消耗很大的。当然，这边后面也会提到，我们可以看到Kimi和那个Kun啊，还有OpenAI他们是怎么样解决这个问题的，这也是一个很大的工程问题。</p>
+<p>所以说这边他们这个hybrid的方案就是说，我们在这个sandbox simulation里面，可以相对更容易、更快、更平稳的产生交互，所以我可以获得更大量的数据。但是这个数据本身的真实度，肯定是有一些噪音在里面的，不一定能保证完全的高效。所以会是一种仿真数据跟真实数据相互结合的方案。</p>
+<p>这个在机器人领域里面，他的比例差别很大——机器人领域的真实数据可能只占1%，仿真数据占99%。</p>
+<p><span class="host speaker">【小俊】</span>：对，是的。我觉得机器人可能可以作为我们这个agent environment interaction cost的一个极端的案例。就是我们现在这种agent假设是一个digital agent，他的成本肯定会比机器人低一点。因为机器人他真实数据真的得有人在那边操控，然后机器人在那边跑本身也会有些消耗，也会耗电。digital agent相对好一点，但是这个成本还是很高。</p>
+<p>所以我觉得我们现在研究agent可能会需要很多精力去处理这个环境的问题，不管是降低环境交互的成本、让这个环境交互变得更平稳，还有如何大量的自己去造一些这种environment。就是感觉在接下来，如果他真的效果非常好的话，那接下来大家的一个重心可能就是——不断的去造这种environment，在这个基础上生成大量的这种task、trajectory、reward，做一种新的scaling的方式。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：这一部分到这边，就是整个data synthesize的方案。我们总结一下：通过各种各样的方案，先定义这个action space动作空间，然后再定义各种小环境，生成各种prompt和agent，然后做这个trajectory synthesize，最后做filtering，获得大量这种数据。这里面核心就是提高他的diversity，然后接下来拿这个数据做训练。</p>
+<p>这里面应该是工程能力的需求比较多，对吧？</p>
+<p><span class="host speaker">【小俊】</span>：对，是的。我觉得这里可能会有非常非常多的小技巧或者trick在里面。就是虽然Kimi Tech就非常实在，把很多recipe或者小技巧都已经放在这里了，但是我觉得假如我们真的要把它做出来，用一种很高效的方式把它高数量做出来，本身可能还是很难的。因为每一个部分，把这个prompt调好，还有包括各种参数调好，保证他能平稳运行、有很高的质量，本身就是一个非常大的工程量。</p>
+<p>然后这里有点像是一个手艺活，就是需要对这个language model本身的behavior、调prompt，包括data synthesize、filtering，有很强的sense。我觉得这个是language model，或者是现在这个agent training里面非常非常重要的一部分。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：所以研究员都是老师傅。</p>
+<p><span class="host speaker">【小俊】</span>：对，像是一个老师傅。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：所以这个是系统工程大于idea，对吧？</p>
+<p><span class="host speaker">【小俊】</span>：对，我觉得一定程度上可以这么说。因为包括很多LM他们的idea，其实市面上有些paper或者research，在conference上都可以见到。然后包括这里面，我们也可以看到，就像OpenAI他们也非常好……</p>
+<p><span class="guest speaker">【Kimi解读】</span>就是把每一个部分用到的各种方案对应的paper都已经列出来了。这边有Weasel LN，然后这边的MoE、对应的Shallow MoE这些，包括后面他们也会列很多paper。其实很多idea在市面上都已经出现了，大家也都已经在小范围内做过验证，像是一个proof of concept。</p>
+<p>但是我觉得，LLM作为这样一个系统工程，它可能需要把各种各样的技巧结合到一起。一方面是把它放在language model training这个范围下面，看一下它的作用究竟是什么；另外一个是把它的scale放得特别大，然后看看效果是什么样的。</p>
+<p>我觉得整体上，现在idea都在那边。甚至我自己能够感觉得很清楚——接下来需要做什么事情，什么能把它做work。但是每件事情都需要大量的工程去把效果做好。我觉得工程可能是一个很大的问题。</p>
+<p><span class="host speaker">【小俊】</span>好的，那这一部分就是data synthesis的部分了。接下来我们会进一步讲强化学习的部分，现在就开始进入。</p>
+<p><span class="guest speaker">【Kimi解读】</span>我自己最近也主要在做这个事情，我觉得这边是非常有意思的，可能会产生一些新的范式，有特别多可以去探索的地方。</p>
+<p>我们先看paper里面最上面讲到的，这边是一个总结。我觉得核心可以总结为"scale of RL"，就是怎么把RL这个训练变得非常大规模。Scale的核心就是获得大量的、非常diverse的task，以及对应的verifiable reward，然后进行大量的训练。这里面核心还是如何找到这种方式，大量地去获取这种数据，并确保verifiable reward的质量。</p>
+<p>在这个基础上，并不是所有的任务都能够有一个客观的verifiable reward。这边我们可以延伸一下——目前有两种类型的任务和reward方式。</p>
+<p>第一种是verifiable的。经典的类型就是数学和代码，这些都是在DeepSeek R1、OpenAI o1这一波最早做、效果做得特别好的一批。它们有一个典型的特点：就是模型生成的最终结果是对还是不对，能够非常容易地通过一个简单的程序或函数来判断。比如数学，可以看推导是不是正确、最后的答案是不是正确；代码可以看它是不是真的通过了unit tests——比如我们写一个函数或功能，给它写一堆测试用例，每一个函数的输入是什么、输出是什么、中间有什么通过条件，就像LeetCode那种题目一样。通过这种方式，我们能快速、高质量地获得这种客观的verifiable reward，从而用它来做训练。</p>
+<p>但问题是，并不是所有的task都可以这样获得verifiable reward。比如paper里提到的creative writing——写一篇小说，或者是可以随意发挥的内容；还有open-ended question answering，就是开放性的问答问题。这种就很难找到一个方案来直接客观地评价。</p>
+<p>所以这时候我们就提出了self-critique reward，基本上就是让模型本身去判断。</p>
+<p><span class="guest speaker">【Kimi解读】</span>它这回答的结果是什么样的，用这个来做verified reward。然后这个paper里面也通过大量的工作，最后形成了一种两方面结合的reward方式来做训练。我们后面可以看到它具体是怎么操作的。</p>
+<p><span class="guest speaker">【Kimi解读】</span>接下来我们先进入第一部分——verified reward。我觉得它取"verified reward"这个名字就挺有意思的，这也是我觉得他们在关注这个环境本身的问题。</p>
+<p><span class="guest speaker">【Kimi解读】</span>我们先看到第一个，就是math、stem和logic tasks。就像我们刚才提到的那几个方向——数学、理工科的问题以及逻辑推理，这些都是能够很容易获得verified reward的。比如说生成的这个答案，我们拿一个数学的parser去给它parse一下，或者把最后的结果抽取出来，看看是不是对应上了。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后它这边提到了一个点，就是说我们要有diverse coverage and a moderate difficulty，这边有两方面。</p>
+<p>第一个，diverse coverage。就是需要让它的task、这个prob足够多样化，这样训练效果会更强，不容易overfit，也能让模型有更多的探索空间。</p>
+<p>第二个点，就是moderate difficulty，怎么去理解呢？就是说这个task不能太难，也不能太容易。为什么会有这样一个设计呢？</p>
+<p><span class="guest speaker">【Kimi解读】</span>如果这个task太容易了，每次尝试基本上都成功，从这个过程中能获得的reward signal就非常少。打个比方，就像大家高中刷数学题，老是做那些简单题目，全都做对，但在这个过程中其实学不到什么东西——对模型来说也是类似的。</p>
+<p>但另一个极端，如果task难度过大，可能回答一百次、两百次，最后只有一次成功，甚至完全不成功，那reward signal也是非常稀疏的。而且假设这个batch里面所有的rollout都是失败的，那模型做优化的时候可能根本不知道往哪个方向优化才是对的，优化的方向就会变得很奇怪。</p>
+<p><span class="guest speaker">【Kimi解读】</span>不过这边我发现，从宣传和paper的writing来看，稍微有一点点出入。像OpenAI他们会不停强调，要easy to verify but hard to answer；然后千问3这边也在强调要有非常difficult的问题。我觉得这个难度，可能是针对base language model本身能力来定的，是一个case by case的问题。</p>
+<p><span class="guest speaker">【Kimi解读】</span>接下来我们看一下，它这边怎么去控制这个难度呢？其实方案很简单，就是先拿没有做过RL的模型，把同样一个问题给它，让它尝试若干次，然后看看最后的准确率是怎样的，再基于这个做一个筛选。但这个阈值具体是什么样的，这边暂时还没有明说，不过我觉得应该会是——</p>
+<p><span class="guest speaker">【Kimi解读】</span>随着训练过程会不断调节，这一部分就是获得数学和 logical task 的部分。我觉得这部分的 data 跟 verified reward 应该是相对最容易获得的一种数据。这也是一部分原因，为什么数学问题在这种 RL 里面是最先被做出来的。</p>
+<p><span class="host speaker">【小俊】</span>对，然后接下来我们进入 complex instruction following 的部分。</p>
+<p><span class="guest speaker">【Kimi解读】</span>对。我觉得这边很重要的一点，就是当我们做 agent task 的时候，它的 instruction following 能力可能会极其重要。因为它需要处理的 context 比之前变得更加复杂——它需要不停地跟环境做交互，对环境做出反应和反馈，不断调整自己的 action，同时还要保持和最初给定的 task 以及 system prompt 的一致性。所以这对它的 instruction following 能力提出了非常高的要求，而且这个 context 可能会变得超级长，交互的次数也会变多。</p>
+<p>所以他们这边专门为 instruction following 生成了一些数据。我们可以看到，第一部分就是他们说的 hybrid rule verification。他们首先会基于 code interpreter 对这个 instruction 的 output 做一些 verification，比如根据它的长度、写作风格、格式等等，然后在这个基础上进一步用 LM-as-Judge evaluation 作为新的 reward source。</p>
+<p>据他们的描述，这相当于是一个防止 reward hacking 的 layer。</p>
+<p><span class="host speaker">【小俊】</span>reward hacking 具体是什么意思？</p>
+<p><span class="guest speaker">【Kimi解读】</span>举个例子，当我们的 language agent 足够强大之后，它可能会变得非常"狡猾"——它可能会发现这个 reward 存在什么漏洞，然后去 hack 它。有点像我们高中做题时，最后猜了一个正确答案，但中间的推理过程乱写，结果还是得了分。这个 language agent 一旦发现这个"作弊"方式之后，就会不断地往这个方向 overfit，导致训练效果变得很糟糕。所以这里就要加入这样一个机制来防止 reward hacking。</p>
+<p>这就是 complex instruction following 的 verification 部分。当然，除了怎么 verify，还有怎么生成这个 instruction 和 data 的问题。他们提供了一个三步的 data generation pipeline——</p>
+<p><span class="guest speaker">【Kimi解读】</span>首先第一步，它收集了一些 human crafted、human expert annotate 的数据。这边找了一些 human annotator，去标注一些复杂的、需要 follow 指令的 task。</p>
+<p>然后接下来，因为这种数据特别贵，也不好去 scale up，所以他们用了一个方案，就是自动用这种方法去做拓展。这边用了 Self-Play（或类似方案），就是之前发的一篇 paper，基本上是一个自动的、用一些种子任务再拓展生成新任务的方案。然后最后用一个"反馈"模型去再生成额外的 instruction，这些会专门涉及到一些失败的案例或者 edge case，这样能确保数据足够 diverse，同时也让 instruction 的复杂度变得更大。</p>
+<p>对，通过这两步，整体来说通过这个模块，我们生成了大量的、需要考验模型 follow 复杂 instruction 能力的数据，并且提供一些比较 reliable 的 reward，来做 RL 的训练。</p>
+<p>然后接下来还有一个部分，就是它的 **factfulness**。Factfulness 是说这个模型有时候其实会"胡说"，甚至有时候输出的 thinking process 跟最后的答案可能没有那么大的关系。所以这边加了这么一个 reward，用来调整、减少模型 hallucinate（幻觉）的可能性，或者让它的答案更加真实一些。</p>
+<p>这边具体做的是什么事情呢？首先他们用的是 **facts grounding**，是 Google 发的一篇 paper，通过 sentence-level 的 fact judge 模型的方式，来判断这个 answer 是否 factful，里面会不会有幻觉或者常识性错误的内容。然后他们会把这个直接加到 reward 里面。</p>
+<p>我觉得这边很有意思的是，有些 paper 单独拿出来看，比如 facts grounding，它可能就只是一个 fact verification 的 task。但是如果把它放到 language model 或 language agent 的 RL 框架下，用来减少幻觉，它会有一些额外的意义——它可能是一种调整模型 behavior 的方式。</p>
+<p>对，到这一部分，就是解决了它幻觉相关的内容。我去查了一下 Gemini 在 HallucinationBench 上的分数，它的排名确实挺高的，在所有模型里大概是前十名左右。有可能就是这个机制起了作用。</p>
+<p>然后接下来下面这个部分，是它的代码能力和 coding 的核心，我们可以看到——</p>
+<p><span class="guest speaker">【Kimi解读】</span>这边具体做了什么呢？一方面，他们收集了大量的competition-level programming problem，就是那种LeetCode或者代码比赛的数据，然后拿来做训练。</p>
+<p>另外一个我觉得很重要的点，就是第二部分——他们在网上、在GitHub上收集了大量的pull request和issue，并且用当前这个checkpoint搭建了一些software development的环境。比如说，随机找到一个repo，这里有人发了pull request，在这个checkpoint或者这个branch里面，就可以把当前时间点的数据作为code base拿下来，然后用这个去搭建一个沙盒，把pull request的内容和最后的solution作为verifiable reward的结果。当然这里面也会有很多unit tests，用这种办法来大量scale up——在coding or debugging、software development这种场景下的task，提供verifiable reward和environment。我觉得这是非常有帮助的一个点，也可能是它这个agent能力的一个核心。</p>
+<p>这边我想拓展一下，因为agent有一个很有意思的问题：有没有办法让agent自己主动地去找到这种reward signal，然后让它自己训练自己？假如我们有一个外部agent或者autonomous agent，它其实能够在网络上不停地自己去爬取、自己做探索。在这个过程中，也许它就不小心进了这样一个GitHub repo，发现有这样一个verifiable reward、有这样一个task，那就自动把这个数据拿过来，自动搭一个sandbox或environment。就算不能完全自动，可能也可以用agent本身做一种exploration的方案，去获得这样的verifiable reward，从而实现agent的一种self-improvement、持续提升的过程。</p>
+<p>不过这个目前感觉更像是一个brainstorm，目前可能还没有人在做这件事，但我觉得是一个非常有意思的研究方向。</p>
+<p>再往下，这边涉及到他们如何搭建环境这件事，这也是这几年paper都有提到的一个点。因为如果要做on-policy training，我们可能需要大量的rollout，有大量的task在并发执行，所以会需要解决环境并发的问题。他们这边提出的解决方案是用Kubernetes这个solution，同时host大规模的concurrent sandbox，在里面做rollout、执行生成的code、获得verifiable reward。Kubernetes可以理解为一个针对高并发、大规模场景的容器编排系统，是Google那边做的，我觉得这是一个比较成熟的工业化解决方案。</p>
+<p>相关的，在Qwen那边他们也提到在阿里云上部署了大量类似的沙盒；OpenAI的ChatGPT agent那里，他们也说有大量的virtual machine，用来在训练agent时提供rollout的环境。</p>
+<p>到这里，coding部分也结束了。</p>
+<p><span class="guest speaker">【Kimi解读】</span>我们可以看到最后有一个safety相关的内容。他们这边做的事情，是用一堆human-crafted seed prompt，来构建、engineer出一些risk level的场景，比如暴力、诈骗或者歧视，并且针对jail break这些场景也写了一套对应的内容，然后用这个来提供verifiable reward，进一步调整agent的behavior，让它变得更安全一些。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后这一部分，到目前为止就是关于fiber reward的部分。然后下一部分，不管它叫beyond verification也好、self-critique rubrics reward也好，在这个场景下，基本上他们需要获得大量fiber reward这种rubrics——就是评价标准之类的。通过这种方式，他们能够给那种没有办法获得fiber reward、更加general的task，比如说creative writing，提供这样一些reward的来源。</p>
+<p>而且通过这种rubrics的话，我们在一定程度上能够调整language model的行为模式。比如说，我们可以在rubrics里加入一些我们想要的language model的价值观，或者它的一些属性。我觉得通过这样的rubrics reward，能够让模型更好地调整自身行为，同时也能让它在更general的task上做出确定。</p>
+<p>然后到这一部分，task reward这部分基本上就结束了，下面就是IL训练的部分。</p>
+<p>Kimi这次在算法上没有特别大的创新，主要是k1.5沿用了之前的一个mirror descent算法。然后他们这边提到有一个点：因为SFT部分用的是momentum optimizer，所以IL训练这部分也继续沿用了这个optimizer。</p>
+<p><span class="host speaker">【小俊】</span>然后再往下，我们可以看到budget control这一部分。这个具体是什么意思呢？</p>
+<p><span class="guest speaker">【Kimi解读】</span>因为我们在做agent，agent在inference time的时候，我们可能有时候不希望它在一些无关的action或任务上做过多的thinking，还是希望它能有更efficient的inference。所以他们这边做了一件事：当模型生成的response太长的时候，就直接截断，然后给它一个penalty，通过这种方式来控制模型的output长度。</p>
+<p>关于这一点，我在知乎上看到有人说，Kimi的response可能会相对比较短、比较简洁，而且在最后还会很贴心地写上一个summary，总结一下说了什么内容。我觉得这可能跟这个reward是有些相关的。</p>
+<p>当然，像之前版本的论文——Kimi 1.5里面，也有一个更复杂、更详细一点的reward用来控制长度，整体思路是希望模型既简短、又能正确地回答输出。但这次Kimi 2这边就有点反其道而行之了，用更简单的penalty方式去控制output的长度。</p>
+<p><span class="guest speaker">【Kimi解读】</span>再接下来就是PTX loss这部分。为什么会引入这部分呢？我们模型在做training的时候，它总是有可能忘掉一些东西。比如因为RL的部分，它更多是让这个language agent学会怎么take action、去跟环境做交互，它可能完全专注在这一部分。在这个过程中，有可能在预训练阶段学到的很多重要知识就会丢掉。</p>
+<p>所以这边提出的方案，是用PTX loss——从现有数据里面取了一些高质量的、手工筛选的数据，在做RL training的时候也拿来一起做training，通过PTX loss的方式把它加进去。通过这种方式，能够防止模型忘记pre-training中一些很重要的知识。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后再往下，我们看到这边有个temperature decay，具体是什么情况呢？就是说，在模型不同的训练阶段，我们要给它不同的temperature。这个temperature具体指什么呢？就是模型在生成的时候，它的randomness有多大，或者说它生成的结果是更单一还是更多样。</p>
+<p>所以在刚开始的时候，模型的能力比较弱，我们可以给它更大的探索空间，让它更多地去探索环境、生成各种多样化的action。这个action有可能是错的，但因为刚开始训练，没有问题——我们可以让它尽可能多地去探索。只要有positive reward，我们就鼓励这样的行为；negative reward，我们就减少这样的行为。通过更多的exploration budget，可以让agent更好地探索环境，学到positive reward。</p>
+<p>但是，当模型训练到后期，整体效果已经比较好，行为也比较平稳了，这个时候我们可能不希望它做过多的探索，反而希望它慢慢收敛——也就是进入一个退火的阶段，逐渐把temperature降低。通过这种方式来做训练，保证后期训练的平稳。</p>
+<p><span class="host speaker">【小俊】</span>是的。</p>
+<p><span class="guest speaker">【Kimi解读】</span>那这边就是整个训练算法，以及reward部分的全部内容。</p>
+<p><span class="host speaker">【小俊】</span>：然后 Zile 这边，我想特别强调它的 infra 部分。因为 Agent 的训练，这种 Agentic 的训练、这种 Monitor R 的 setting，它在一定程度上对模型训练的 infra 提出了新的要求。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：比如说，我们可以看到这边——我特别关注的是 3.3.4 这个 Agentic Rollout 的部分。首先我想先讲一下，为什么它对 infra 或 scheduling 会提出新的要求。</p>
+<p>我们先说一下，当前很多训练框架，或者它的 scheduling 算法，是更多针对 RLHF 或者传统的 rollout 去设计的。那这样的话，每一轮 rollout 的 latency，也就是所需的时间，这个 delay 是相对比较平稳的，而且没有涉及到特别多的多轮交互。这样的话，我们可以更好地估计时间，所以大部分时候 GPU 都是在跑、在用的。</p>
+<p>但是我们来看一下，Agentic 这边是什么情况。</p>
+<p>第一个，Agent 跟环境的交互时间，或者说这个 delay，是不稳定的。比如说在 browser、在 web browser Agent 的场景下面，当 Agent 生成了一个 action 接下来要去执行，但有可能那个 browser 突然卡了一下，或者网络不太稳定，就突然挂在那儿；甚至有可能某个 browser 直接崩掉，卡死在那儿。</p>
+<p>那这样，如果没有对 training infra 做优化的话，就会导致一个问题——GPU 一直卡在那，或者直接把某一个 rollout 给崩掉。这样就会导致 GPU 的 utilization 不是特别高，对 GPU 的使用效率就不是特别好。</p>
+<p>还有一个问题是，因为 Agent 是 multi-turn 的交互，所以对于某些 task，Agent 可能两三步就完成了，但有的 task 可能得二三十步才能完成。但是我们 inference 的这个 batch 其实是相对比较固定的，这就可能导致我们需要为某一个 rollout 一直等待。</p>
+<p>举个例子，比如说某一个 batch 里面有 256 个 rollout，其中 250 条 rollout 在五步之内就完成了……</p>
+<p><span class="guest speaker">【Kimi解读】</span>假如说花三分钟，但是有剩下六条，它们可能需要花十分钟才能完成，那这样导致的结果，就是有大部分时间都是用来做无效的rollout，或者是专门为那六条来做。所以这样导致GPU的时间，就有大量的GPU时间会被浪费掉。</p>
+<p>所以呢，TPK2这边提供了一个方案，我们来具体过一下。</p>
+<p>首先第一个，它从环境的角度去解决这个问题。如果有一个环境，它特别特别heavy，就特别重，然后很吃GPU、吃memory，跑起来很费算力，那么他们就会把这个环境单独包装成一个service，起一个service，然后包装一个API，通过这个API来交互。然后host这个环境的computer，我们就可以给它多一些算力之类的，或者做一些优化，单独地让它变得更加平稳。</p>
+<p>然后第二个，他们提供的一个策略，就是同时发出大量的concurrent rollouts，来缓解这个latency。比如说我最后可能只需要64条，但是一开始我可以同时rollout 640条，只要我完成了64条，我就把这个rollout的过程给结束。这样就会让它的效率变得更高一点。</p>
+<p>或者这边可能有另外一个方案——假如我们这边主要的blocker，或者主要花的时间，是在和环境交互的过程中，那么我可能采取的一个方案就是：在每次rollout过程中，我生成一个action，就开10个environment跟它做交互，然后取最快完成交互的这个action。这样就可以把environment交互时间的variance给降低下来。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后，接下来他们还有一个策略，是针对我们刚才说的rollout特别长的问题——他们管这个叫"long tail trajectory"。所以他们做的方案就是partial rollout，直接把这个东西给截断，不要了，直接把它停下来，然后在下一轮RL iteration的时候给它恢复。这个方案很大程度上提高了利用效率。</p>
+<p>但是，这可能潜在地会有一个问题需要优化：在下一个RL iteration的时候再继续这个rollout，那么这个rollout里面产生的action，并不是当前模型的策略产生的action，所以说有可能……</p>
+<p><span class="guest speaker">【Kimi解读】</span>我想一个例子，想一个比喻。就是说，可能在上一轮 rollout 的时候，这个模型会犯一个错误。我这个 rollout 结束、模型的参数更新了之后，它就不会犯这个错了。但是我这个 rollout——还留在 buffer 里的这个 rollout——还是上一轮的，所以看起来我这个模型还会犯错。这样我就拿这个 rollout 来更新模型的参数，这样就会产生一些问题。</p>
+<p>所以整体上，他们这边设计了各种各样的 organization 来优化模型训练的效率。另外从单码层面、实现层面上，他们用了 OpenAI Gym 的 framework。现在有一个 codebase 叫做 Gymnasium，这个东西基本上就是把 agent 跟环境的交互用 Gymnasium wrapper 给它处理好，然后往外 expose 一个 `step` 或者 `reset` 这样的接口。这样就能很好地处理跟环境的交互。现在基本上大部分 RL training 的代码，在我看来都沿用了这一套。</p>
+<p>他们这边也说了，后面可能会想要进一步把他们的 RL infra 再 expand 到更 diverse 的 interactive environments。我希望这边应该可以包括 browser 或者 computer use，这样大家可以更容易地去做这种 training。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【Kimi解读】</span>到目前为止，RL training 这部分也基本结束了。我觉得 RL 这块总结一下，就是通过 skill-up、大量生成这种带有 verifiable reward 的数据来做 RL training，同时对 training 的 infra 和 environment 做各种各样的优化。</p>
+<p>这边穿插说一下 OpenAI 的 Kimi K1.5——不对，是 **o3**，o3 Coder。他们主要是放了一篇博客，博客里面没有特别详细地提到 synthesize 的部分，只有一句话提了他们 skill-up 这些 synthesize 数据，但花了很多笔墨去描述他们要 skill-up RL 的 training。他们那边也是类似……</p>
+<p><span class="host speaker">【小俊】</span>描述说，我也需要host大量的synthesize。我觉得两边基本上是一样的，就是解决类似的engineering上的问题。然后OpenAI的ChatGPT Agent，他们也提到说，他们host了大量的这种virtual machine，用来给这个agent在这个环境里面做探索。然后他们在这个virtual machine的优化上花了很多的精力去做。</p>
+<p>那接下来我们来一起看一看ChatGPT Agent的这篇技术报告。</p>
+<p><span class="guest speaker">【Kimi解读】</span>好的。</p>
+<p><span class="host speaker">【小俊】</span>ChatGPT Agent这边，主要是他这个release的博客，然后我会结合最近ChatGPT Agent团队跟The Square那边的一个采访，总体讲一下这个内容。</p>
+<p>我们先开始往下看，过一下这个博客。我觉得他总体上来说，基本上就是把ChatGPT的几个产品——Operator（一个browsing agent）、一个search agent——的action space，把它unify到一起。所以这个agent一方面可以做这种browsing的操作，比如说点击webpage；另一方面又能在webpage上做这种搜索、做大量检索，两方面结合。</p>
+<p>据他们采访的时候说，为什么要做这样一个事情——因为Operator它擅长的事情是理解GUI，然后操作webpage browser，进行这种navigation；但是它可能针对于找大规模、大量这种textual的信息，未必是最强的。但是Deep Research，它基于的环境是一个text browser，上面有大量的文本信息，在这上面做大量的search和点击新的URL，然后总结信息。所以他们创始团队认为，这两方面的能力其实可以很好地结合起来，能让它变得更强。所以就出现了这么一个新的project。</p>
+<p>然后关于它是怎么实现的呢，其实有两种猜测，可能有两种方案去实现这种事情。第一种是做一个multi-agent的系统，具体来说就是我们有一个Operator这样一个browsing agent，再加上这个Deep Research——</p>
+<p><span class="guest speaker">【Kimi解读】</span>好的。</p>
+<p><span class="guest speaker">【Kimi解读】</span>这样一个 Search Agent，再加上 Tool Use，多个 Agent，最后把它们结合在一起，然后通过 End-to-End 的 RL Reward Signal 来做训练。第二个方案，就是直接把它的 Action Space 统一到一起，所以就是单一的一个 Agent，能够做 Browsing，也能够做 Search，也能够做 Tool Use，然后 End-to-End 地做一个训练。</p>
+<p>然后他们在论文里面强调的，主要就在强调 RL——就是如何获得大量的这种 RL Signal，然后用来给它做训练。并且他们在强调，任务一定要足够难，并且容易去 Verify，基本上就是跟我们前面说的 Verifiable Reward 是类似的。</p>
+<p>然后他们也提到了一嘴，就是说他们大概有什么样的数据。一方面是这种 BrowserComp 类似的 Information Seeking 的数据，就是给你一个描述，然后接下来要去找一段很难找的信息，但要找的信息非常简短、非常简单。</p>
+<p><span class="host speaker">【小俊】</span>也许我们可以看一下这个大概是什么样子的？可以看到这个屏幕吗？</p>
+<p><span class="guest speaker">【Kimi解读】</span>可以的。对，这个还只是猜测，我并不确定这是不是真的在训练数据里，但是长得非常像。根据他们的描述，看起来非常像 BrowserComp——BrowserComp 是之前发的一个数据集，它大概是这个样子的。比如说它的 Task 就是这样的，然后它的 Answer 就只是找到一个"Plastic Man"这样一个很简短的答案。</p>
+<p>所以通过这种方式，我们其实能够很轻松、很容易地给出一个验证方式——因为这样子只需要比较模型找到的结果跟这个是不是一致，或者是包含这个答案就算对；就算更难一点，直接拿一个 LM 去评估一下是不是一致，其实也能做到很好的效果。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后我们看到很多其他的例子，也都是答案是一小块，但是他们强调这个信息必须是非常难找的。所以他们通过这种方式，相当于我们能够大量地、以一种更简单的方式获得这个题目和答案，但是这个问题足够难，所以我们就可以逼着这个模型去不断地提高自己。有点像我们做题的时候，给自己出一个比较难的题，但是我们有办法知道这个答案，通过这种方式自己不断地去做训练。</p>
+<p>然后他们在里面也提到了，会开大量的 Browse Session，然后去做大规模的这种训练。而且这种 Browse Session 有时候也不是很稳定，所以需要很多的努力去把它做通。</p>
+<p>然后我觉得，做这种 Computer Use Agent，包括下一代的 GPT Agent，这边的训练可能还有一个很大的难点——也是我们训练 Web Agent、Computer Use Agent 最大的一个问题——就是其实很难在 Web 这个环境里找到大规模的高质量的 Verifiable Reward。如果是 Information Seeking，像 BrowseComp 这种方式，这是相对容易的。但是假设我们的任务是下单一个产品、点击某个东西、或者查看一下机票，这样的话，Agent 需要不断地做 Browsing Action，但是在大部分网站上我们是没有办法获取后台数据的，所以这就导致 Verification 会相对比较难一些。</p>
+<p>当然我们可以在一些小规模的沙盒环境里面做训练，这样是可以获得后台数据的，但是如果真的要把它 Scale Up，可能我们需要一些非常高明的方式去获得这种 Verifiable Reward。</p>
+<p><span class="host speaker">【小俊】</span>对。然后我们可以进一步再过一下他们 ChatGPT Agent Browse 那个博客，关于他怎么实现这个方案的，目前感觉——</p>
+<p><span class="host speaker">【小俊】</span>更像是只是把 Icon Space Unified 到一起，而不是做一个 Multi-Agent 的系统。但是这边没有明确的信息，大家可以去讨论，或者测试他具体究竟是怎么实现的。</p>
+<p><span class="guest speaker">【Kimi解读】</span>对。他们这个 Property 会逐渐 Rollout，现在就是 ChatGPT 的 Property Rollout，或者 Plus User 会逐渐获得这个权限。</p>
+<p><span class="host speaker">【小俊】</span>然后我们可以看到，他这边这个博客主要是展示各种 Use Case。比如说第一个 Use Case 就是让 ChatGPT 去做 PPT。之前曾经有人提到说，让 Agent 做 PPT 是一个很难的事。所以最早的时候，大家拿 Agent 或者 Language Model 做 PPT，是用 LaTeX 形式，让这个 Agent 写一个代码，然后生成一个很固定格式的 PPT，这样当时相对方便一点。</p>
+<p><span class="guest speaker">【Kimi解读】</span>但是我觉得像 ChatGPT 这种，ChatGPT Agent 这种，能够结合 Browsing 的这种 Action 之后，做 PPT 或者类似的操作会变得更容易。</p>
+<p><span class="host speaker">【小俊】</span>然后接下来还有一个 Use Case，就是把 Research 跟 Action 结合在一起。就是这个 Agent 一方面可以做调研、查信息，另一方面可以去 Browse 到一些新的页面，然后做 Customization，比如做 Slides 等等，有一系列的 Use Case。</p>
+<p><span class="guest speaker">【Kimi解读】</span>对。然后他们也做了一些不容易评估的 Evaluation。这边 "The Last Exam"——也就是那个叫做"人类最后的考试"的任务——是一个非常难的任务，但是也看到它的 Success Rate 被提到很高。不过这也不是……就是它的名字叫"人类最后的考试"，但是——</p>
+<p><span class="host speaker">【小俊】</span>：现在看着效果这么好，它可能也不是人类最后的测验，它可能是人类到时候第二个、第三个……</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对。然后这个 Frontier Math 也是一个非常难的数学 benchmark，整体上的效果分数没有特别高，但是相对于这些 baseline 也提高了很多。对，然后这边还有各种 Analogy Task，包括 Data Science Task，这边是在做一个 spreadsheet，就是做 Excel 这些东西，跟前面 Demo 里面是相互关联的。我觉得每个 evaluation 其实基本上都对应着一个真实的用户应用场景。</p>
+<p><span class="host speaker">【小俊】</span>：对，我觉得这边还有 BrowserBench，把分数确实弄得非常高。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，我觉得这边 ChatGPT Agent 整体大概就是这样的内容。然后我觉得它跟 Gemini 他们这次不同的是，主要他们针对 Browser，就是 Computer Use Agent，再加上 Deep Search Agent，他们也是比较早把这个东西 unified 在一起的一个尝试。但确实感觉做这个事情会很难，很难把它做成功。所以我觉得这是一个非常厉害的事件。</p>
+<p><span class="host speaker">【小俊】</span>：对。我们接下来也可以再进一步看一下 Kimi Coder 这个 Tech Report，这个相对也很简单，对吧？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，就是没有细节，我很想看细节。但是我们可以猜一下，简单猜测一下这边大概是什么情况。然后他们也放了个 Leaderboard，然后就对着 Gemini 进行冲击，分数确实会高一些。但是我觉得现在这个 Leaderboard 好像大家也不怎么看了，它可能并不能完全反映 model 的 performance，可能大家现在更在意的是使用的体感。</p>
+<p><span class="host speaker">【小俊】</span>：然后还有最近一个新的榜单，有一个平台叫 OpenRouter，是看各种 API 或者使用情况的。确实，Kimi Coder 在上面的排名确实也很高。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：所以我觉得这些都是非常强大的一些模型。然后在……</p>
+<p><span class="guest speaker">【Kimi解读】</span>也是在实际生活中，或者实际应用中都被广泛地使用了。然后 KunSanCoder 相比于 Kimi K2 的话，它增加了 Agentic Browser Use 这样一个任务，就是之前 Kimi 那边没有的。</p>
+<p>这边 WebArena、WebArena，我可以简单介绍一下这两个 Benchmark——WebArena 和 Mantua，都是这种 Browser Use，就是 Web Agent 的一个 Evaluation Benchmark。</p>
+<p>Mantua 不是我们组的一个工作，主要就是我们在 100 多个、大量的真实网站上，找 Annotator 去标注了大量数据，之后去做标注，然后让模型去预测每一个 Action 是不是对的。这个也算是比较难的一个 Task，因为它的 Task 足够 Diverse，所以需要这个 Agent 能够泛化到各种各样的网站上，这提供了很大的 Challenge。</p>
+<p>然后 WebArena 是一个——他们建立了很多网站的沙盒（Sandbox），然后在里面做 Evaluation。因为如果我们是沙盒的话，可以访问后台的数据库（Database），这样的话我们就可以做 Evaluation，很准确地判断一个 Task 是不是真的完全完成了。</p>
+<p>然后从这边看下去，Performance 确实是挺不错的，相对于别的模型有了一定的提升。</p>
+<p><span class="host speaker">【小俊】</span>然后我们再看一下这个 Book……</p>
+<p><span class="guest speaker">【Kimi解读】</span>Pretraining 这块，我觉得路线也是差不多的。然后它增加了 Context Length，然后这边 Synthetic Data 这块也提到了 Skill Gap 这个数据，但是没有更多的细节。然后 Post Training 这块，我们可以看到这边 Skill Gap Code……</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后提到 Hard to Solve、Easy to Verify，我们可以看到在各种场景上面，也是随着训练数据增加，它这个 Performance 会有上去，有一个 Scaling Law。</p>
+<p>然后在这个基础上，它们还增加了一个 Long Horizon 的考量——就是说，假如这个步数特别长的话，模型的 Performance 可能一般会更糟糕一点，所以他们就专门针对这个做了一个努力。</p>
+<p>然后我们可以看到这里，它也提到了需要支持这个 Infra，Environment Support、Infra 的优化是挺大的问题。它们这边建立了两万个独立的、Parallel 的 Environment，然后放在阿里云上。</p>
+<p>这样的话，我觉得这种努力对学界可能不是特别友好——因为如果能开这么多 Session，本身是会有一定成本的，然后学界可能也需要有足够多的 Engineering 能力去把这个事情做出来。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后这边主要是 Model Training 的部分。然后 Cursor Code 这块我还想 highlight 一下，就是最近一个 Common Practice——大家常做的一件事情——就是我在发模型的同时，还发了这种 CLI Tool，它这边是直接跟 Gemini 对接的。</p>
+<p>我觉得这一定程度上也在反映，这些模型它不只是单纯地刷榜、秀肌肉，而是真的在实际生活中应用到了各个场景。然后它这种 CLI 工具，也在一定程度上——假如我们能够收集到用户和这个 Agent 交互的数据——也许能用这个进一步再去改进 Agent 本身。</p>
+<p>然后这边他们直接提供了 Support，也提供了 VSCode 的插件，可以直接用上。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【Kimi解读】</span>这边主要就是 Quantization and Colors 的内容，感觉如果……</p>
+<p><span class="host speaker">【小俊】</span>：我們可能還可以再講一下，對，這邊就是這幾個 Instruction Tuning 模型的主要內容。然後我們還有一個 Manus 對 Context Engineering 的這個 Blog，所以我們也可以簡單的講一下。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：好的，對。Context Engineering，對，Context Engineering 是個 Capability，它簡單直接提出了一個 Concept，主要講的是你怎麼樣很好地把 Context 這個內容給它管理起來，然後讓這個 Model Performance 更好。</p>
+<p>我覺得這個可能本質上跟以前說的 Memory 是有一定相關性的，然後我這邊也會想 Extend，拓展到 Agent Memory 這個內容。我們可以先簡單地從頭到尾過一下這個內容。</p>
+<p>對，這個 Blog 的作者也是從 NLP BERT 的時代過來的。那個時候這種模型是沒有這樣的 In-context Learning 能力的，就是這個模型它只能針對一個場景或一個 Task 把它做好，或者只有一類的 Task。</p>
+<p>比如說之前那個 BERT 是谷歌那邊做的這個 Encoder 模型，然後如果讓它在下游任務上能做好，它一定要拿 Data 做 SFT，這樣才可以。</p>
+<p>但是就是 ChatGPT 這一波，從大模型出來之後，有了一個 In-context Learning 能力，就是我單純地通過語言的描述，就可以讓這個 Language Model 適配到一定的場景或一定的 Task。所以這樣的話，就可以簡單地做一些 Prompt Engineering，就可以快速地迭代出一個應用出來。</p>
+<p>所以呢，它這邊也提到，Manus 最初的時候也在糾結兩個路線……</p>
+<p><span class="host speaker">【小俊】</span>：一個是 Intel 的 training，這個確實是非常貴。像我們看到，另外一個，就像 Minus 現在這個路徑，就是專注做 context engineering，快速地迭代出產品。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：然後這個 Burk，他們分享了很多的經驗，關於如何更好地做 context engineering。我覺得他們整體的思路，就是針對 KV cache 所優化。</p>
+<p>那這邊講一下，KV cache 是什麼呢？基本上它是一個能讓你的 inference 更快、更省錢的方案。</p>
+<p>具體技術上的原理是什麼呢？我們大家可能都知道，language model 主要基於 transformer，而其中最重要的一個概念是 attention。Attention 就是你把文本或者 input 放進去之後，它會生成 Q、K、V 三個矩陣。</p>
+<p>而 KV 這個矩陣，如果你的 context、也就是前文是一致的、沒有變動，那 KV 矩陣就可以重新使用，不用每次都重新計算。所以這樣的話，就可以讓 inference 變得更快，也更省錢。</p>
+<p>他們這邊簡單羅列了一下：如果用 KV cache，就花 0.3，也就是三毛錢；不 cache 的話，就要三塊錢——是很大的一個差距。</p>
+<p><span class="host speaker">【小俊】</span>：那接下來他們怎麼說如何更好地利用 KV cache 呢？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：對，他們提到了幾個做法。第一個，就是讓你的 prompt 前文保持一致、不要動，這樣我們就不用重新計算 KV cache，可以直接拿來重用。</p>
+<p>第二個，就是我們的 context 不要動中間的內容，只是把新的內容不斷地追加上去，這樣也可以保證 KV cache 不變、可以重用。</p>
+<p>然後這邊還要加上 breakpoint，還有這個 mask——</p>
+<p><span class="guest speaker">【Kimi解读】</span>都 remove 也是一致的。就是说，如果中间有什么内容不用了，比如说我们想换几个 tool、换个 MCP，一个方案就是把它拿掉，从 context 拿掉，然后改一下 context。但这边他们建议是不要动，只是把它 mask 掉，再生成的时候让模型就不管它。这样的话就可以保证这个 KV cache 可以重用。又是一个巧妙使用 KV cache 的小技巧。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【Kimi解读】</span>然后这边也是用 file system 作为 context。但这边就有一个问题——采取这个策略很好，reuse KV cache 能够降低成本、用得更快，但是这个 context 会变得越来越长。当 context 变长之后，模型可能会变笨，那怎么去把它的注意力放到我们想让它关注的地方？所以它就提出用这个 to-do 的 md 文件，去 manipulate，就是控制这个模型的 attention。</p>
+<p>然后最后这边还有另外一个点，就是说如果中间模型犯了 mistake，就是有些 failure，或者做错了一些什么东西，也还是把它放到 context 里面。</p>
+<p>最后一个，是关于 few-shot learning 的一个例子。就是说 few-shot learning 的一点 background——背景是这样的：当我们想让模型有一定的行为模式，或者 follow 一定的格式的时候，我们就会考虑在这个 context 里面给它放一些 example。就比如说这边的例子，是一个 action、一个 observation……</p>
+<p><span class="guest speaker">【Kimi解读】</span>action1、observation2、observation2，这样agent就会进一步follow这个新的action。但是他们这边提出，我们最好把这个context的内容变得更加diverse，就是更加多样化一点，而不是非常一致性。不然的话，模型它可能会倾向于不停地重复前面的内容。这样在保持推理的时候，就会有一些重复的推理，浪费token，或者出现一定的没有用的推理。</p>
+<p>然后这边我想延伸一下，到agent的memory这个问题。我觉得agent memory这边，可能需要很多新的工作去把它做得更好。</p>
+<p>有别于传统的chat-based memory——chat-based memory就是我一直在聊天，这个数据是非结构化的——但是在agent的场景下面，它的交互或者数据，我们可以看到是非常高度结构化的：有一个action，有一个observation，然后有environment feedback，而且这个轮数非常长。</p>
+<p>所以也许这边我们需要的是：有一个机制，可以结构化地管理这个agent的memory。比如说，某个action之后会发生什么；或者说，我们需要维持一个能够高效增删改查的机制，让这个agent——当它出现了一个新的action——我们可以考虑，如果这个action是有用的话，怎么把它插入到这个memory机制里面，就是"增"；或者当一个action执行之后，某一个memory需要修改，我们就给它做一个"改"。</p>
+<p>就是可能需要有一个高效增删改查的memory机制，来保证这个agent系统能高效运行。那这边好像目前还需要更多的研究。</p>
+<p><span class="host speaker">【小俊】</span>嗯，明白。</p>
+<p><span class="host speaker">【小俊】</span>：这个就是主要是Manus这个博客的内容。那我们今天就是把这几篇研究报告都完整地讲完了一遍。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，谢谢，非常地大。</p>
+<p><span class="host speaker">【小俊】</span>：接下来你觉得，对于Agent的未来发展，会有一些展望吗？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，我觉得这边非常——让我觉得非常有意思，就是有很多很好玩、很有意思的事情可以发生。我可能有几个方面吧，分别针对从研究上和应用场景上面来说。</p>
+<p>从研究上来说，我觉得很有意思的事情是：我们能不能用Agent做一种方式，让它实现一种self-improvement，就是自我提升的这种能力。</p>
+<p>比如说，我们在前面也提到了，讲Kimi 2 Report的时候，我们发现Kimi 2的researcher们手动地在GitHub上找到了一些pull request或issue，然后基于这个建立了一些sandbox，让Agent去做RL training。</p>
+<p>但假如我们这个Agent，他能够自己在网上take action，自己去爬、自己去做探索，然后自动地找到这样的做RL训练的reward environment——或者他不一定完全自动化，也许是他能够找到这些，然后让researcher或工程师做一些筛选，再提供这样的一些environment，让Agent自己去做training。</p>
+<p>也许我们可以找到一种方式，让不管是web agent还是coding agent，能够自己去给自己找reward，然后进一步不停地做自我提升。我觉得这个是非常有意思的事情。</p>
+<p>而且假如我们这个web agent已经足够强大了，他可以很稳定、高效地在网站上自己去爬各种网站、自己去做探索，也许他可以是一个——</p>
+<p><span class="guest speaker">【Kimi解读】</span>很高效的data engine，去进一步找到一些新的、或之前没有被发现的data。另外，它可以跟网站不停地做交互，也许这也是一种让agent自我学习的过程。</p>
+<p>然后除此之外，我觉得还有一个有意思的点是，我们目前在强化学习的范围下，也许可以找到一些方式，更高效地利用这个rollout，或者说这个agent跟环境的交互。目前我们这种强化学习的范式就是：我们做rollout，然后最后用verifiable reward得到一个reward值，再拿这个来做训练。但是在这个rollout的过程里，有很多数据其实没有被很高效地用起来。</p>
+<p>也许我们可以从这种exploration、或者这个rollout的数据里面，提取一些有用的知识或信息。就举个例子，比如说我前段时间的工作，是让web agent自动在网站上去探索。对，这个工作叫**Skill Weaver**，具体是这样的：</p>
+<p>我让这个web agent在一个新的环境上，自己去提出一些可以完成的task。比如说在航班网站上，它可以说"我要订一个航班"，然后去搜索某些信息。接着，这个agent自己会去探索、自己会去执行，尝试完成这个任务。然后它还会有一个reward model的模块，可以判断这次探索是不是成功。如果成功的话，我们可以把这个探索的轨迹转变成一个API。</p>
+<p>通过这种方式，我们可以把agent在reward exploration过程中产生的数据，转变成大量有用的procedural knowledge——在这个case下，就是大量的API。我们基本上可以通过这种范式、这种方法……</p>
+<p><span class="guest speaker">【Kimi解读】</span>随机拿一个网站，我们可以自动给它生成大量的API。然后在inference的时候，或者是用户需要的时候，这个agent它可以不再是从头开始、一步一步地做reaction——因为这个特别慢，而且每一步都需要重新过模型做生成——而是可以直接调用这个API，然后能快速地执行。</p>
+<p>这只是一个简单的例子。我这边想说明的那个点就是：agent这个reward，或者这种exploration的过程里面，有大量的有用的数据或知识。我们也许可以有一种方式，很好地把它们积累起来，然后进一步提升这个agent，或者language model自己本身的能力。也许这是做一种language model agent self-improve的方案，进一步提高他们的能力。这是从research上的一个展望。</p>
+<p><span class="host speaker">【小俊】</span>那从应用方面呢？</p>
+<p><span class="guest speaker">【Kimi解读】</span>我觉得从应用方面，有很多很有意思的事情。感觉现在这种agent逐渐接近了一个——就是他真的变得有用的阶段。比如说这种coding agent，基本上每天都跟人类混在一起。比如我现在每天很多代码都是agent写的，然后我做的事情更多是修改它，类似给它提供reward。</p>
+<p>但也许，假如我们有大量的这种agent、这种product的出现，那么用户在跟它交互或使用的过程中，其实我们就像是一种annotator，在不停地给它提供各种reward。也许从应用层面上，随着这种产品越来越多，我们可以用这种人类和agent交互的数据，进一步提升agent的能力。</p>
+<p>这让我想起了几件事情，就像Mistral，他们跟Nimx show app提到的一点——就是research product co-design，就是research本身和产品会相互一起迭代。</p>
+<p><span class="host speaker">【小俊】</span>也许这种获取数据、然后进一步提升研究或提升模型能力，是一个案例。还有就是像前段时间Windsurf的收购案，我觉得收购方想要的一个吸引点，也是他们积累了大量的用户数据和agent的数据，然后通过这个方式——不管是用来进一步改进prompt，还是强化agent——都能很好地提高agent的performance。</p>
+<p><span class="host speaker">【小俊】</span>除此之外，我觉得也许agent和人类的交互方式，也会有很多需要改进的地方。比如说，我发现我自己用外部agent的时候，我的指令大部分情况下其实是非常模糊的。大部分人可能没办法一次性直接把最精准的指令给到agent。</p>
+<p><span class="host speaker">【小俊】</span>举个例子，我曾经试过这样一个案例：我想买一个咖啡机，但我第一次跟agent说的是"帮我找一个咖啡机，大概价格在100元以下"，因为这是我比较关注的点。但他找到结果之后，我发现种类实在太多了，而且我也不想让他随便给我买一个。这个时候，agent应该学会在信息非常模糊的情况下主动提问——问我需要什么颜色、什么牌子，或者还有没有其他需求——从而把需求变得更加明确，最后完成他的任务。</p>
+<p><span class="host speaker">【小俊】</span>也许agent需要有这样一种能力，去不断地主动跟用户解决这个ambiguity（模糊性）的问题，让使用体验更加舒适。</p>
+<p><span class="guest speaker">【Kimi解读】</span>我觉得这个在coding agent上做得非常好。比如说我有时候写代码，一开始自己也不知道要写什么东西，然后agent会不断地跟我迭代、不断地帮我修正，最后我终于明白了自己想写什么，代码也写出来了。</p>
+<p><span class="host speaker">【小俊】</span>对。我觉得主要是这几个方向的展望——从研究上有很多有意思的可以探索的点，然后从应用上……</p>
+<p><span class="host speaker">【小俊】</span>：感觉也离大家的日常生活越来越近了。我特别希望能看到这种 agent 能被大家日常使用。你觉得 agent 和人，最后会构建出一个什么样的网络？我不知道怎么描述，比较像……共生体验？或者是什么？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：我有时候感觉，agent 是我的另外一个大脑，就是一个拓展的大脑。所以每个人会有一个分身。</p>
+<p><span class="host speaker">【小俊】</span>：对，可能是一群分身。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：是的。比如说我的 coding 会交给 Claude 来做，然后有时候帮我 polish paper 或者 writing 是 ChatGPT 来做，然后 Gemini 因为它的 long context 特别强，所以我有时候特别喜欢把一堆文档交给它，让它帮我整理内容。所以最后相当于是我日常做事情的时候，背后有一个军团在帮我做事情。</p>
+<p>甚至比如说，我有时候会跟 ChatGPT 聊天——就是有些我不太确定的事情，我先跟它聊一下，看看它有什么回复。但是当我需要一些非常尖锐、非常刻薄的建议的时候，我就会用原生的 DeepSeek。因为 DeepSeek 有时候字还挺犀利的，但它说的观点非常一针见血。</p>
+<p>所以我感觉，以后每一个人都可能会有一大串这种 agent——a family of agents，帮助大家做日常生活中各种各样的事情。</p>
+<p><span class="host speaker">【小俊】</span>：所以 ChatGPT、DeepSeek，还有比如说元宝、豆包、Gemini，它们的性格个性还是很不一样的，虽然看起来好像都差不多？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：是的。我觉得 DeepSeek 比较特殊，它嘴特别"臭"。</p>
+<p><span class="host speaker">【小俊】</span>：我觉得这个……反而可能让它挺可爱的？</p>
+<p><span class="guest speaker">【Kimi解读】</span>：可能是因为它的训练数据中有很多贴吧的数据，大家老喜欢调侃，然后在社交媒体上也可以看到各种 DeepSeek 说一些尖锐语言的截图，还挺有意思的。</p>
+<p><span class="host speaker">【小俊】</span>：我有时候特别喜欢豆包，元宝就比较"甜狗"。</p>
+<p><span class="guest speaker">【Kimi解读】</span>：对，是的。</p>
+<p><span class="host speaker">【小俊】</span>：然後 ChatGPT 好像最近也變得——怎麼說，情商變高了好像？但那情商變高的時候，好像變笨了。</p>
+<p>【Kimi解讀】：好吧，所以他情商……情商高是挑什麼才是說——我覺得應該是 alignment 的時候，讓他更符合人類的傾向。就像我們說的那個 RLHF，我們可以回到那個 paper，就是在 Kimi K2 的，他有個 reward 叫 rubrics-based reward，他這個 rubrics 裡面就可以寫他的 helpfulness、creativity。這個時候我們也可以加入他要有情商高、要有同理心、然後說話要好聽。但是可能我們也可以反向調他，讓他說話很尖銳。</p>
+<p><span class="host speaker">【小俊】</span>：你覺得今年 Agent 可以發展到一個什麼樣的程度？明年呢？Agent 你覺得他已經爆發了嗎？</p>
+<p>【Kimi解讀】：我覺得可能是看不同的場景。我覺得 coding 這邊已經爆發了，就是可以看到——我們大家可以看到，現在這種 coding agent，比如 Cursor、Windsurf，或者還有很多的公司，比如 Augmented Code。然後就我目前的感覺，是我和我的朋友們，大家基本上現在代碼自己寫的越來越少了，基本都是讓 Agent 去寫一個大概，然後自己再去改。他們也許有的地方還不太擅長，就比如說寫那種系統層面的 code，比如說寫 Ray 或寫 multiprocess，但是他寫前端之類的，真的非常強大。然後我覺得這種增長可能會越來越快，而且加上更多的跟用戶的交互數據之後，我覺得 coding 這邊可能會爆發得特別快。但是 to-use 這邊，感覺他的 inference……</p>
+<p><span class="guest speaker">【Kimi解读】</span>还是很有难度。Toy uz 这边应该很快，但是 browser 这边，我觉得他的 infra 这边可能也会有一定的难度。所以我觉得整体上来说，感觉他发展可能会非常快。</p>
+<p><span class="host speaker">【小俊】</span>现在选择 Agent 作为研究方向的博士生多吗？</p>
+<p><span class="guest speaker">【Kimi解读】</span>现在挺多的。可能可以从 paper 看出来，因为 paper 实在太多了，每天都有大量的这种 Agent 的 paper 出现。</p>
+<p><span class="host speaker">【小俊】</span>我们刚才一开始其实也聊了一下，就是你们现在非常地卷。</p>
+<p><span class="guest speaker">【Kimi解读】</span>对，是的。就是可能我刚开始读 PhD 的时候，这个领域可能一周一篇，甚至一个月一篇。然后有一次我休息了两周左右，没怎么看 paper，结果回来发现已经变天了，就觉得很可怕。</p>
+<p><span class="host speaker">【小俊】</span>今天也非常感谢你——你是早上凌晨 3 点钟起来，然后凌晨 5 点钟给我们录的播客？</p>
+<p><span class="guest speaker">【Kimi解读】</span>没有，正好倒过来了！非常开心能跟大家一起聊一聊，也非常感谢小俊的邀请。那我们下集再见，拜拜！</p>
+<p><span class="host speaker">【小俊】</span>拜拜！</p>
+</body></html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EP119 Kimi_Linear、Minimax_M2？和杨松琳考古算法变种史，并预演未来架构改进方案</title><style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.9;color:#333;background:#fafafa}
+h1{font-size:1.4em;color:#222;border-bottom:2px solid #eee;padding-bottom:10px}
+.meta{color:#888;font-size:.9em;margin-bottom:30px}p{margin:.6em 0}
+.host{color:#1a6bbf;font-weight:500}.guest{color:#d4720a;font-weight:500}.speaker{font-weight:bold}
+</style></head><body><h1>EP119 Kimi_Linear、Minimax_M2？和杨松琳考古算法变种史，并预演未来架构改进方案</h1>
+<div class="meta">主持人：<span class="host">小俊</span> &nbsp;|&nbsp; 嘉宾：<span class="guest">杨松琳</span></div>
+<p><span class="host speaker">【小俊】</span>Hello，大家好，欢迎收听张小俊商业访谈录，我是小俊。今天这期节目，我们将讨论一个在当下非常关键的话题，那就是人工智能的算法与架构创新。嘉宾是我们的网期嘉宾常客，他是MIT的在读博士杨松琳，研究方向是线性注意力机制。我们将从最近刚发布的几个新模型——Kimi Lunar、MiniMax M2、Qwen3 Max切入。松琳参与了其中Kimi和Qwen的部分工作，他是Kimi Lunar论文的作者之一。</p>
+<p><span class="host speaker">【小俊】</span>算法创新为什么在2025年变得尤为重要呢？它背后的成因是数据、算力和算法，是驱动人工智能的三架马车。在数据增长趋于瓶颈的无奈前提之下，各个模型公司都不得不重新开始雕琢模型架构，以及Scaling Law的延续方式。而由于中国的算力相对美国有限，这反而让中国的AI算法创新走在了世界的前沿。</p>
+<p><span class="host speaker">【小俊】</span>这期节目你将听到：近几年架构最大的突破，是DeepSeek的MoE混合专家模型，它让MoE成为了全球共识；而下一个突破的重要方向，可能是Attention注意力机制。中国公司已经在Attention上展开了不同的技术探索。具体来说，目前已经发布的这些模型中，DeepSeek正在探索的是Sparse Attention稀疏注意力机制，Kimi Lunar正在探索的是Linear Attention线性注意力机制，MiniMax在年初的M1版本中探索的是Linear Attention，而在刚发布的M2版本中又重新回到了Full Attention，也就是全局注意力机制。</p>
+<p><span class="host speaker">【小俊】</span>在节目中，松琳将讲解他参与的这篇Kimi Lunar的工作，并分析以上这些公司在Attention上的不同抉择。与此同时，他也将带领大家考古人工智能的算法演变史，并预演未来算法与架构的改进方案。内容比较硬核，会有一些专业难度，大家可以根据自己的实际需要收听。也因为嘉宾的工作环境的原因，所以会出现一些中英文夹杂的情况，希望大家能够多多理解和支持。让我们开始吧！</p>
+<p><span class="host speaker">【小俊】</span>Hello，松琳，先给听众朋友们打个招呼，并且做一个简单的自我介绍吧。</p>
+<p><span class="guest speaker">【杨松琳】</span>Hello，大家好，我叫杨松琳，我现在是MIT CSAIL的一个PhD在读。我的主要研究方向的话，是Language Models的一些架构，主要是比较高效的注意力机制。</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得国内的算法创新肯定是更强的。他们最后选到的是一个叫做KDA的模块——KIMI Data Attention。这个名字感觉挺有梗的，他们应该是想对标比较出名的Deep Seek Attention，然后就特意取了一个KIMI开头的名字，非常对照。</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得每次大家关心Linear Attention，那肯定是因为大家碰到了一些context window的瓶颈。我觉得我还是挺喜欢看最早的那些paper的，我觉得那些paper写得都挺好的，我管这个叫做"考古"。</p>
+<p><span class="guest speaker">【杨松琳】</span>先看看能不能把全局注意力这个算力瓶颈把它干掉。对，这第一点就是——因为它确实是阻止context window继续scale up的一个主要瓶颈。我觉得这号件的话，就是把混合注意力里面的全局注意力，把它换成Sparse Attention。我觉得理论上，只要Sparse Attention它能选得准的话，是完全可以取代Full Attention这个层的。</p>
+<p><span class="host speaker">【小俊】</span>：机制这些的研究，更具体来说的话，主要是在研究这一类注意力模型，叫做线性注意力。你能给大家讲讲你整个研究的主线是怎么递进的？你是怎么走向 Linear Attention 的研究的？</p>
+<p><span class="guest speaker">【杨松琳】</span>：像 Linear Attention 的话，最开始的时候，当时看到很多斯坦福的一个 research group，叫做 Hazy Research，就是 Albert Gu 他们在斯坦福的那个 Lab。然后当时看到很多他们写的博客，觉得序列建模是一个非常有意思的问题，就决定来做一些序列建模的问题。</p>
+<p>刚开始读博的时候，微软亚研院有一篇工作叫做 RetNet，那个时候最开始就想办法来提高 RetNet 的效率，以及它的 performance。然后之后发现，提高效率的这一套硬件优化算法，可以扩展到很多其他类似的架构里面。</p>
+<p>同时，之后的一些工作主要是想办法进一步在硬件高效训练的同时，能够提高这种新型注意力架构的 performance。这边说从门控机制，然后到一个叫做 Data-Dependent Decay 的机制，后面的话就是把这两个东西合在一起，让它合成一个统一的规则，变成一个更新规则，同时又可以有一些硬件高效的算法来进行训练。</p>
+<p><span class="host speaker">【小俊】</span>：我看上次我们节目发了以后，很多人说你是"Linear Attention 之母"，这是为什么？</p>
+<p><span class="guest speaker">【杨松琳】</span>：可能是在这个领域做了很多工作吧。然后尤其是还有一个开源库叫做 flash-linear-attention，这个库感觉这个领域里面很多人会用，包括业界也有很多人用这个库来进行一些 Linear Attention 的探索。所以我那几篇工作应该还是比较有影响力的，可能大家会这么来称呼我。</p>
+<p><span class="host speaker">【小俊】</span>：能怎么通俗地去理解一下 Linear Attention？</p>
+<p><span class="guest speaker">【杨松琳】</span>：通俗地理解 Linear Attention 的话，它中文是线性注意力，对吧？线性的话，他主要的意思就是线性复杂度。线性复杂度对立的话，就是平方复杂度，也就是说我们平常的 Softmax Attention 是平方复杂度。我们大家都知道，Softmax Attention 的话——</p>
+<p><span class="guest speaker">【杨松琳】</span>：它有三个矩阵，有Q、K、V。一般的话，它就是Q和K先求一个矩阵相乘，得到一个L×L的矩阵。L的话是序列长度。然后对这个L×L的矩阵做一个Masking，因为它基本上都是自回归的语言建模嘛，所以我们要把未来的消息把它mask掉。这样的话我们得到一个下三角的L×L的矩阵，然后我们再加一个Softmax，就得到一个注意力分数矩阵。然后最后再用这个注意力分数矩阵和那个V的矩阵做一个相乘，得到一个Output。这就是Self-Attention在这种自回归建模里面的一个比较粗略的介绍。因为它会有一个L×L的矩阵，所以它的复杂度是平方的。</p>
+<p>然后线性注意力的话，它一般就是把那个Softmax operator把它去掉。这样子的话，我们就把这个非线性的Softmax去掉了。然后我们可以通过一些等式的变换，可以把它写成一个类似于RNN推理的一个形式。这样的话，它每一个step的cost就是O(1)，然后处理这个长度为L的序列，它整体的复杂度就是O(L)。所以它跟长度的关系是一个线性复杂度的关系，所以大家会把它叫做线性注意力。</p>
+<p><span class="host speaker">【小俊】</span>：如果把现在的大语言模型的算法做一个框架，给它一个背景的话，线性注意力应该放在哪个地方啊？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得现在都是在Transformer这个基础架构里面再进行一些改动吧。像大语言模型的话，它的基础大概可以分成Pre-training、Post-training之类的。然后这些架构的研究，那肯定是在Pre-training这个里面的。Pre-training它有很多其他类别的研究嘛，比方说像优化器、像这种基础架构，还有一些Pre-training data之类的东西。线性注意力的话，应该就算在这个基础架构的研究里面。</p>
+<p>然后现在基础架构的话，基本上它整体的框架还是Transformer这一种——它会有一个注意力机制和一个前馈网络，就Feed-Forward Network，在这两个模块里面反复地叠加，叠加很多次就得到我们现在的Transformer的一个框架。</p>
+<p>一般的话，大家就是会在这个框架下面来进行一些修改吧。像最近几年，大家会把传统的MLP，或者说Feed-Forward Network，把它换成混合专家的一些模块，Mixture of Experts，MOE的一些模块。然后线性注意力的话，就是把传统的Softmax Attention换成一些线性的Attention。当然，现在最近更火的，还有一类叫做Hybrid的架构。</p>
+<p><span class="guest speaker">【杨松琳】</span>：就是有一些层，它还是一个Softmax attention，然后另外大部分的层就把它换成线性注意力的这种层。</p>
+<p><span class="host speaker">【小俊】</span>：对。我们来聊聊你最近参与的一个新工作吧，就是Kimi Linear Attention。你是怎么参与到这个工作当中的？</p>
+<p><span class="guest speaker">【杨松琳】</span>：这个工作应该是10月底刚发布的。他们应该是年初就想开始做，然后当时就是Flash Linear Attention这个库的另外一个主要的作者，他叫张宇。他就是今年从博士毕业，他在国内读博士毕业，然后他正好就在Kimi。然后Kimi就正好想做这个混合注意力，然后张宇就在做这个项目。</p>
+<p>因为他就是FLA那个开源库的一个collaborator，所以我们很熟。然后我会帮他们看一下，就是有一些线性注意力的一些变种，它的那些变形的算法该要怎么设计之类的。</p>
+<p><span class="host speaker">【小俊】</span>：当时他们团队遇到的核心问题是什么？为什么开始决定要重新设计一下注意力机制？</p>
+<p><span class="guest speaker">【杨松琳】</span>：就是年初的时候，我觉得大背景的话，就是像DeepSeek R1和Kimi 1.5那个时候刚刚发布。然后它的核心——它会做一些RL，然后会得到一些非常长的思维链，就是chain of thought。然后它会用这个非常长的思维链来做这种test-time scaling，来解一些比较复杂的问题。然后这个思维链的长度呢，往往就能够到几万个token这个长度。</p>
+<p>然后Kimi就觉得，如果我们用每一层都是平方注意力的这个架构的话，它在decoding的时候就太贵了。因为首先每一层它要存一个大量的KV cache，另外每一步它是线性的时间复杂度，所以decode如果decode了L个token的话，它的时间复杂度也是一个平方的。</p>
+<p>所以就是在这种长思维链的大背景下面，让Kimi觉得需要去投入资源来探索一下这种混合注意力。因为它能够把inference的cost打低很多。这一点在这种长思维链、non-Transformer的背景下面，以及今年整体的agentic AI的背景下面，是非常有用的。大概背景就是这样子的。</p>
+<p><span class="host speaker">【小俊】</span>：你们当时核心目标是什么？需要完成哪些核心目标？</p>
+<p><span class="guest speaker">【杨松琳】</span>：当时的核心目标可能主要是张宇那边在做，他们的目标应该就是——跟之前的那种full attention相比，performance要不掉点，同时inference速度会快很多倍。</p>
+<p><span class="host speaker">【小俊】</span>：如果用full attention的话，它的缺陷是什么？</p>
+<p><span class="guest speaker">【杨松琳】</span>：如果用full attention的话，在做长文本的decoding的时候，就是非常的昂贵。</p>
+<p><span class="host speaker">【小俊】</span>：能不能从你的视角给大家讲讲这篇论文，稍微画一下重点？</p>
+<p><span class="guest speaker">【杨松琳】</span>：像这篇文章的话，他们这个线性注意力的模块，他们最后选到的是一个叫做KDA的模块——Kimi Delta Attention。这个名字感觉挺有梗的，他们应该是想对标DeepSeek's linear attention，然后就特意取了一个Kimi开头的名字，非常的对仗。然后这个线性注意力的模块呢，它基本上就是基于——</p>
+<p><span class="guest speaker">【杨松琳】</span>我去年有一个工作叫做 Gated DeltaNet，然后在这个基础上面进行了一些改善，最后形成了一个叫做 KDA 的模块。</p>
+<p>总来说的话，首先我们有一个叫做 DeltaRule 的东西，这个可能可以之后再稍微具体讲。然后像 Gated DeltaNet 这个工作，当时受限于 efficiency，就用到了一个像 Mamba 2 一样的 scaled value 的 gating。</p>
+<p>这个的话，他的门控——他的这个粒度——就是对于一个 attention head 来说，他下面的所有维度全部会共享同一个 decay 衰减率。这样的话，在计算上面会带来一些简化。所以当时的考虑就是，先在 Mamba 2 的基础上加上 DeltaRule，能让他的效率有保证。所以当时就只用到了那种粒度比较粗的门控机制，这就是 Gated DeltaNet。</p>
+<p>然后像张宇宛的这个 KDA，他就是把这个粒度比较粗的衰减率换成了粒度比较细的衰减率。就之前的话，一个 attention head 下面不同的维度要共享同一个衰减率；现在的话，不同的维度每个维度有自己的衰减率。这样的话，每一个维度对应的 RNN 的那个记忆、那个隐藏状态，就有自己独立的一套类更新的频率。从直觉上来看，他就能够更好地利用 RNN 有限的 hidden state，从而提高 performance。</p>
+<p><span class="host speaker">【小俊】</span>你们的设计逻辑和灵感来源是什么？</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得 KDA 其实就是把我前两个工作的 idea 合并在了一起。像我之前还有一个工作叫做 Gated Linear Attention，他就有这种粒度比较细的衰减率。然后后面到 Gated DeltaNet 的时候，当时之所以没有用到这种粒度比较细的衰减率，是因为当时算法本身和 kernel 优化都还没有优化到一个比较好的状态，所以考虑到效率的问题，被迫只能用 Mamba 2 那种粒度更粗的衰减率。然后后面的话……</p>
+<p>我来整理这段播客对话稿：</p>
+<p>---</p>
+<p><span class="guest speaker">【杨松琳】</span>：在算法层面和优化层面，都有很多进步。到今年年初这个时间点，大家就觉得，是不是可以重新来研究一下，能不能把翻规定的、力度比较细的这个衰减率，把它引回到 GatedLinearAttention 里面。</p>
+<p><span class="host speaker">【小俊】</span>：你们设计完，最初的效果怎么样？</p>
+<p><span class="guest speaker">【杨松琳】</span>：最初的效果的话，我记得张宇应该是先试了一大堆这种混合注意力的混法。然后他最开始发现，后面 GatedLinearAttention 比混其他的要好。然后后面他就是——因为他们 Kimi 内部有一个叫做 Scanning Ladder 的东西，就是说你在一个规模下面表现好的话，那你就要到下面一个规模去继续 scan。对，就有点像通关，他有很多很多个关卡，你过了一关之后，可能要到下一关继续去跟 Full Attention 去比。然后最开始的话，可能就发现那种 Hybrid 的 GatedLinearAttention，在有一些地方还是不如那种 Full Softmax Attention。然后后面他就开始玩了一下，就是把那个 dK 换成这种更加细粒度的 dK，然后他发现在他的一些实验下面，这个提升还挺大的。</p>
+<p><span class="host speaker">【小俊】</span>：Linear Attention 和 DeepSeek Sparse Attention，你自己觉得他们的表现哪个更好？他们分别可能适合什么样的任务？</p>
+<p><span class="guest speaker">【杨松琳】</span>：这两个 Attention 其实想解的是同一个问题，就是在这种长文本 decoding 下面，如何解决效率的问题。像 Kimi，他走的是这种混合线性注意力的路线。对，其实千问他也走的是这一条，现在主要是在投入这种混合线性注意力的路线。然后像 DeepSeek 的话，他们主要就喜欢走稀疏注意力这个路线，他们那个 MLA Sparse Attention，还有包括他们之前发的那个 Native Sparse Attention，都是走的稀疏的路线。然后他们觉得，可能稀疏是一种更好的方式来降低 decoding 的 cost 吧。像 DeepSeek Sparse Attention 的话，他应该是没有 Full Attention 层的，所以他应该是每一层都是 DeepSeek Sparse Attention。但是他每一层都要把所有的 KV Cache 全部存下来，然后他只能从一个 checkpoint，经过一些真正的……得到他那个叫做 Indexer 的东西，来选那些 Top-K 的 Token，去追 DeepSeek Attention。然后像混合线性注意力这条路线的话，他还是有一些全局注意力的，然后那些比较快速的层是一些线性注意力层，这个好处的话就是说他可以——</p>
+<p>---</p>
+<p>（对话未完，原文截止）</p>
+<p><span class="guest speaker">【杨松琳】</span>：省很多的KV Cache。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后混合注意力的话，他不仅能减少KV Cache，他能减少很多KV Cache。因为他绝大部分层都是这种类似于线性注意力的层嘛。然后他同时也能提高Decode的效率。然后因为他减少了KV Cache的Size，所以他做Decode的时候，可能就可以去用一些更大的Batch Size——因为之前可能放不下嘛，现在KV Cache被减少了很多，这个时候就可以加大Batch Size。</p>
+<p>像DeepSeek Sparse Attention的话呢，他是没有减少KV Cache这个作用的。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：但是他可以通过Sparse Attention的激活来减少每一个Token生成的花费。</p>
+<p><span class="host speaker">【小俊】</span>：对。嗯，还有一家MiniMax，他们最新也做了一个算法上的选择，对吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>：嗯，对。像MiniMax的话，他上一版是个Linear Attention。对，他应该算是这种混合——混合线性和Full Attention——的一个先驱。因为他年初发的那个M1版本，是一个非常大规模的混合注意力的实践。</p>
+<p>然后他们前几天发了一个叫做M2的模型，这个模型现在变成了Full Attention。他既不是混合注意力，也不用Sparse Attention，他干脆把它推回了Full Attention。</p>
+<p><span class="host speaker">【小俊】</span>：这是为什么呀？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得……他们这个负责团队非常Open，分享了很多经验，这些经验都很宝贵。比方说，我知道他们说，他们第一版监控的一些指标，发现他们用到的那个Linear Attention模块在这些指标上表现得都很好，而且Linear Attention效率更高一点，所以最后就上了Linear Attention。</p>
+<p>然后后面他们发现，如果在一些叫做Multi-Hop Reasoning——就是多跳推理——这种Task上，他发现掉点会非常大。当初选那个方案的时候，因为他们最开始没有去检测这种多跳推理的能力，主要只看了比方说MMLU之类的这种能力指标。</p>
+<p>就我来说的话，我觉得那个Linear Attention其实是一个比较弱的线性注意力。因为最近两年线性注意力这个领域发展了很多嘛，而他用到的那个Linear Attention，感觉像是两年前的技术，还停留在两年前。</p>
+<p>所以很有可能是因为他们第一版做评价的那个Pipeline不够严格，然后就选了这么一套比较略显过时的方案。然后最近他们可能是想做Agentic Task、想做Coding，而多跳推理这个能力在这些场景下会变得非常重要。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后他们就发现 Lightning Attention 和 Linear Attention，可能跟 Full Attention 之间的这个 performance 的差距还挺大的。然后他们就暂时退回了全部都是 Softmax Attention 的这个 Full Attention 的架构。但他们说他们还在继续探索这种混合注意力的架构，说不定他们下一版 M3 又变成混合注意力架构。</p>
+<p><span class="host speaker">【小俊】</span>：嗯，你怎么看待大家在这种算法上的不同选择，或者是反复？</p>
+<p><span class="guest speaker">【杨松琳】</span>：像这种的话就会螺旋上升嘛。就是一套技术方案，肯定是要经过很多很多验证才能最后定下来的。像 M1 可能当时就是没有验证比较充分，所以当时就比较草率地上了，然后后面发现它在这种长跳推理上面效果不好，然后就暂时退回来，这个也是很正常的嘛。</p>
+<p><span class="host speaker">【小俊】</span>：归虎的公司现在对于混合注意力机制，他们的探索方向是什么样的？跟其他公司有什么不一样？</p>
+<p><span class="guest speaker">【杨松琳】</span>：这个我感觉我不能讲了呀。</p>
+<p><span class="host speaker">【小俊】</span>：哦，OpenAI 什么的可以讲吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：OpenAI 的话，我只能讲一些有 paper 的方案，没有 paper 的方案我是不会讲的。OpenAI 的话，比如说像 GPT-3，他在那个 Technical Report 里面就讲了，他会用到一个混合的全局 Attention 和一个 local 的 Sliding Window Attention 这么一个混合的方案。像这个的话，他是在 GPT-3 的那个报告里面就已经明确写出来了，所以这个是可以讲的。然后像他们最近的那个 OSS 发出来的开源模型，他们也是用到了这种滑动注意力的这一套方案。所以他们应该就是一直在用这一套滑动注意力的方案吧。</p>
+<p><span class="host speaker">【小俊】</span>：对。我倒想去讲一下，因为你刚刚说 Linear Attention 这两年发展也有很多，能给大家讲一下它的这个发展线索吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：好呀。Linear Attention 的话，他最开始非常地不 work，就算在短文本下面他也不 work。因为他那个最早的 Linear Attention 是 2020 年发明的嘛，然后我觉得这中间的这几年，在 language modeling 语言建模上面效果都没有跑到很好。然后后面一个比较有代表性的工作就是 RWKV，他就是通过加一个遗忘衰减的机制，然后就发现 Linear Attention 在 scale 上去之后，在语言建模上面还是可以取得一个比较好的效果的。</p>
+<p>然后 RWKV 的话，他往里面加了一个输入无关的 decay，就是说他的遗忘率是跟输入没有关系的。比方说他的遗忘率是 0.99……</p>
+<p><span class="guest speaker">【杨松琳】</span>那样子的话，他每过一个Token的话，他前面的那个Hidden State就要乘上0.99。这样的话，他就遗忘掉他1%的这个东西了，然后他再把新的这个东西把它写进去。这就是一个叫做"输入无关的衰减"，这就是RWKV他用到的一个技术。</p>
+<p>然后这种输入无关的遗忘的话，他在之后应该是被逐渐替换成了那种输入相关的衰减。就比方说像之前的一个叫Gated Linear Attention，前面也提到了，就是加了一个门控的机制。</p>
+<p>然后像Mamba和Mamba2的话，他们其实也跟线性注意力有很多联系的。尤其是Mamba2，Mamba2的话基本上就可以看成是线性注意力然后加了一个衰减。但是这个衰减跟RWKV非常像，然后他跟RWKV去比的话，那个衰减他是有输入来决定的。就是每一个Token，他这个衰减率可能不一样。</p>
+<p>对，就比方说他遇到有一些Token，他觉得前面的内容没有用、不要忘，他就可以把那个衰减率设为1，这样子的话前面就根本不去做这种衰减。然后如果他遇到一些Token让他觉得前面这些信息已经没有用了，那这样子的话他可以在那个位置上，比方说让他的衰减率——让那个dk等于0，这样的话前面那个State就被完全忘掉了。对，因为他乘了一个0上去嘛，所以他前面的State就完全没有了。</p>
+<p>像这种输入相关的dk，他就比较灵活，能够通过数据来动态地学习什么时候该去遗忘，然后什么时候该去保留前面这个State。</p>
+<p>那这是第一个比较大的改进，就是把这个衰减从输入无关变成输入相关。</p>
+<p>然后第二个改进的话，就是DeltaNet这一种路线，就是把他的更新公式从最开始那个简单的——相机量探审他用到的，其实应该叫做一个叫做"加边路"（additive rule）。对，这个路的话他就是简单地把Key和Value他们的外积加到那个Hidden State上面，他就是一个加法的路。</p>
+<p>然后像DeltaNet这一套模型，他用到的是一个叫做"Delta Rule"的东西。Delta Rule的东西的话就是说，每一步的时候，他先用这个Key去取出——</p>
+<p><span class="guest speaker">【杨松琳】</span>那个memory里面，会返回一个值，这就是这个key在这个memory里面本来对应的value，我们管它叫做old value。然后这个key又会有一个输入的value，我们把它叫做input value。</p>
+<p>因为这里有一个记忆网络的视角，每一个key我们想让它只对应一个value。模型也不知道它应该对应前面的value还是输入的value，但是后来我们又有一个可以学习的参数叫做beta。beta可以看成是一个只在0到1之间的系数，用来决定我们要用多少前面的old value，以及要用多少输入的value。我们会通过这个系数来做一个线性组合，得到它最后新的value。然后把这个旧的value和key的外积从memory里面减去，再把这个新的value和key的外积加到这个记忆网络里面。</p>
+<p>这就是DeltaNet更新公式的一个highlight idea。相比于Linear Attention，它其实有一个减法的操作在里面。加法可以把它想象成是往这个记忆网络里面去记东西，那么减法就可以理解成从这个记忆网络里面删除一些东西。像这样的话就会比较有针对性地来删东西。像之前那个delta k，可能很多维度一起在做delta k，而现在就只取某一个分量，有一些非常有目标性的删东西的操作在里面。</p>
+<p>所以以DeltaNet为代表的第二个改进，应该就是Linear Attention这个领域里面最近的第二个改进了。包括像DeltaNet、GatedDeltaNet、还有Mamba7，它们都用到了这个DeltaNet的思路。</p>
+<p><span class="host speaker">【小俊】</span>那为什么Linear Attention从一开始效果不好——</p>
+<p><span class="guest speaker">【杨松琳】</span>：到慢慢地一步步改进，大家就是相信它还是有promise的。</p>
+<p><span class="host speaker">【小俊】</span>：我觉得每一次大家关心Linear Attention，那肯定是因为大家碰到了一些context wall。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。像大家最开始的时候去研究Linear Attention，比方说在2020年左右的时候，大家去研究Linear Attention，是因为那个时候大家遇到了第一个context wall——就是遇到了context这种"墙"。然后他如果想继续提高context，那就是要找一些复杂度小于softmax、小于平方的一些东西来替代。</p>
+<p>对，因为当时像BERT，在那个年代，他的训练其实就是512嘛。然后当时可能觉得2048，在当时的那个视角，可能8192就算是一个长文本了，因为那个跑起来就非常的慢嘛。</p>
+<p>然后后来随着Flash Attention这个技术的诞生，就打破了这一堵墙。然后现在看来，8192就是一个非常短的文本了，在这上面做训练是没有一点压力的。</p>
+<p>但是在之前，没有Flash Attention的时候，他在计算的时候，需要把这个平方的Attention矩阵——先把他实例化在那个global memory上面，然后再把他从global memory里面搬回那个shared memory里面。这样的话，memory的读写，整体的overhead是非常大的。同时因为这个Attention矩阵会被实例化在global memory里面，就可能会带来一个out of memory的问题。</p>
+<p>这就是最开始大家研究Linear Attention的这个motivation。然后随着Flash Attention，大家就发现这一堵墙其实已经破了——既然我们能用这种exact的方式来直接算这个softmax的Attention，那我们就没必要找一些Linear Attention去逼近他嘛。</p>
+<p><span class="host speaker">【小俊】</span>：对，所以Linear Attention的研究就开始没有那么受关注了。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后直到最近，这边要说，像这种长文本的decoding，又重新成了一个需求量非常大的东西。然后就是这种大语言模型，他要吐很多很多的token——</p>
+<p><span class="guest speaker">【杨松琳】</span>然后要做这种decoding，这个花销的话呢，就会让人们又不由自主地重新来审视这一套技术。然后这一套技术本身，也就有了这么久的发展嘛，尤其是在Flash Attention之后。学界其实也意识到，如果像Linear Attention这一套模型想被大家接受的话，那硬件上面的效率是非常关键的。</p>
+<p><span class="guest speaker">【杨松琳】</span>对，这也就是为什么我最开始搞了一个叫做Flash Linear Attention的project，致力于把这些Linear Attention的变种用Triton写成kernel，让它能够在当代的硬件上面——主要是GPU上面——能够快速运行。</p>
+<p><span class="host speaker">【小俊】</span>对，所以它核心是效率更高、价格更低。就是每当Softmax Attention的效率成为瓶颈的时候，大家就会回来看Linear Attention。大概就是这样子的一个历史。那Linear Attention现在是共识了吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得现在的共识是——纯Linear Attention是不work的。就是它在长文本场景下面，有一些比较fundamental的缺陷。然后现在大家一般都不会去尝试这种纯线性的模型。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后像一些比较折中的方案，像这种混合注意力（Hybrid Attention）的话，它还是有很多很多的线性注意力层，但同时也有一定数目的全局注意力层。这样的话，这个模型的下限是有保证的——它处理长文本也是有一定保证的，因为它中间还是有很多全局注意力层。</p>
+<p><span class="guest speaker">【杨松琳】</span>像全线性的网络的话，它可能从理论上就没有办法做那种长文本的task，因为它的RNN的状态数目是固定的嘛。然后随着context长度增加，它早晚会存不下，早晚会损失很多信息在里面。但是像混合注意力的话，它有很多全局注意力在里面，所以还是可以通过这些全局注意力来完成长文本的task的。</p>
+<p><span class="guest speaker">【杨松琳】</span>对，然后比方说像Mamba-in-the-Llama这个paper，还有之前Qwen3，和……</p>
+<p><span class="host speaker">【小俊】</span>Qwen3？</p>
+<p><span class="host speaker">【小俊】</span>：在Mamba Next上，它在常温Benchmark上面，比方说像ruler，比方说像其他task那个表现，没有掉点，对吧？所以它在常温本上面还是有一定的能力的。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。然后混合注意力就会受到很多地方的关注吧，但是我也不知道它算不算共识。因为不同的地方还是在尝试不同的方案，比方说像DFCQ，它就在尝试这种Sparse Attention的方案。</p>
+<p><span class="host speaker">【小俊】</span>：嗯。在Mamba这个论文里面，你们提出的是每三层的KDA，也就是Mamba Delta Attention增量注意力机制，插入一层全注意力机制Full Attention，这个比例是怎么确定的？这个比例重要吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得3比1现在也快变成一个共识了吧。像Mamba Mini它之前是一个7比1的比例，7比1的话，可能Softmax的task那个层数不够，然后长文本的那个保证可能没有那么好。然后我记得之前字节也发了一个paper，就是来研究这个hybrid架构，它需要百分之多少的Softmax Attention。然后他们的结论也是说，他们做了很多Pretraining的一些实验，通过改不同的Linear Attention的module，还有改那个混合的比例，他们的结论大概就是说3比1这个比例是最好的，然后GatedNet这个模块比其他那些Linear的要好。</p>
+<p><span class="host speaker">【小俊】</span>：对，所以3比1。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后后面Mamba Next的话，他也是用到3比1，然后混GatedNet这个方案。这个方案应该是不同的厂商探索出来，都觉得这个比例是更好的。这个可能是最开始Mamba Mini没有验证充分，就之前也说他们最开始的评测还是有一些不足，所以他们用到了一个更加aggressive的方案，就是7比1。然后现在的话基本上就是都回到了3比1这个上面来了。我觉得3比1应该就是在这个不那么共识的Hybrid Linear里面的一个共识了，就是大家用3比1的比例来混这个模型。</p>
+<p><span class="host speaker">【小俊】</span>：嗯，是不是你们在算法设计的时候，始终要平衡表达能力和计算效率？这两者是核心的，比如说北极星指标吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：确实吧，我觉得还是有一些trade-off的。像全局注意力的话……</p>
+<p><span class="guest speaker">【杨松琳】</span>他如果太少的话，我感觉比方说像这种reasoning task，还有长文本task，肯定会受影响比较大。他可能一些受上下文限制的task没有什么影响，比方说MMLU，但是那些长文本和推理的task应该是能看到的，那个折损会比较大的。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>但是从另外一方面来说，也不是说全局注意力层越多越好。因为像大家如果训完之后会发现，绝大多数的全局注意力层，他可能就是没有用的嘛。</p>
+<p><span class="host speaker">【小俊】</span>对，然后他就有一些关键层的全局注意力是有用的，不是每一层的全局注意力都有用的。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后这个网络他本身，自己就是有一个冗余度在里面的，这样子呢，他就给我们带来一些机会。比方说我们可以把一些层换成一些线性层嘛。</p>
+<p><span class="host speaker">【小俊】</span>对，所以混合的架构就不一定……我觉得他不一定代表就是比那个全局注意力要差吧。</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，他很有可能就是一个全面更好的替代方案。然后像MiniMax，他之前也发过，他承认了一点我觉得非常好，就是说他们发现hybrid线性注意力，或者hybrid这种滑窗注意力，在长文本的multi-hop多跳推理上面会有缺陷。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>像这个的话，我觉得这个应该是现在hybrid架构唯一的一个问题吧。因为就我所知，我知道他在其他task上面基本上是不会比全部都是softmax注意力要差的，他只会在这个……这个也比较好理解，就像这种多跳推理的话，他就是比较吃token和token之间的关系，所以他可能就比较吃softmax注意力的层数。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，我觉得就是非常吃全局注意力层数的任务其实不是很多，可能就只有这种多跳推理，还有这种长文本做reasoning会稍微吃一点，然后其他很多task基本上不吃的话……</p>
+<p><span class="guest speaker">【杨松琳】</span>但他是完全不会受影响的。然后像这种multi-hop reasoning这个task的话呢，我觉得，如果我们去开发一些硬件高效、但是表达能力更好的一些RNN的话，这个gap是有可能被直接缩小，甚至反超的。</p>
+<p>就比方说像Kimi他最近这个Ninja架构，之前就发现，把粗粒度的decay换成细粒度的decay之后，他在这些multi-hop reasoning、coding和math这些task上面，提升还是比较可观的。</p>
+<p>然后就是说这些task，hybrid可以做得更好。然后现在我觉得混合线性注意力只是一个开始吧。我觉得整体上还是很有可能做出更好的这种混合注意力架构的，就是可以去雕一下那个线性注意力的那个模块。</p>
+<p><span class="host speaker">【小俊】</span>你这个过程中有给Kimi什么算法建议？</p>
+<p><span class="guest speaker">【杨松琳】</span>对，就是张宇想玩那个逐层的decay嘛，然后我就帮他想了一个chunk-wise并行的那个算法。感觉这个应该可能就是我对这个工作的唯一贡献了。因为这个基本上都是张宇在Kimi做了很多很多ablation study，基本上都是他做的。所以功劳基本都在他那里，不在我这里。</p>
+<p>然后像这个算法的话，其实也是——之前有一篇文章叫做Comba，他就设计了一个新的算法，能够把那个gate在他那个求逆的算法里面减少一次。然后我看完那个算法之后，我就发现，哎，那我就可以把那个gate在那个求逆里面也减少一次。然后我又紧接着推了一个能够适用于GDA的这个算法，然后我就把这个算法告诉张宇了。张宇就去写CUDA去实现这个算法，然后就发现这个算法的scalability相比之前的算法要好一点的。</p>
+<p><span class="host speaker">【小俊】</span>问一个很general的问题啊，是一个研究员想问你的——attention到底应该怎么设计？这个问题的话——</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得现在可能就只有两条路，两条比较主流的路线吧。一种就是hybrid线性嘛，然后一种就是sparse attention嘛。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后我觉得这两种其实都是非常promising的。然后另外可能有一些比较非主流的一些attention设计，比方说我上次看到meta放了一个论文，就是搞一个三次方的attention，就是说平方复杂度他还不够，他还要搞一个三次方的。</p>
+<p><span class="host speaker">【小俊】</span>嗯。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后像有些地方，他有一些比较有意思的平方复杂度的attention变种，比方说Baidu他之前有一种dataformer的，就相当于把data-dependent的思想引入到softmax attention，能够让他表现得更强。这个工作我觉得也非常有意思。</p>
+<p>改进attention的话，要么就是把softmax让他做得更好，要不然的话就是做一些更加高效的attention，比方说sparse attention，或者这种混合线性的attention。然后这两种我觉得他也是可以结合的，他们有各自的优点和各自的缺点。像sparse attention的话，他的exact retrieval肯定要更强一点，但他的缺点就是说他KV cache不能省。然后像线性的话，他可以省很多KV cache。</p>
+<p><span class="host speaker">【小俊】</span>嗯。</p>
+<p><span class="guest speaker">【杨松琳】</span>所以我之前写了一个知乎的回答，我就说这两种方案，为什么我们不能把它结合到一起呢？就比方说我们可以让sparse attention去取代这种混合注意力里面的那个全局的attention层，这样的话我们就不需要有一个全局attention的那个复杂度了，但我们还是需要那个KV cache。但剩下很多层的KV cache，就可以通过这个线性attention把KV cache的size打下来。这样子的话，我觉得可能就是我目前心中比较理想的一个高效的架构了。就是in terms of高效不掉点而言的话，是这样子的。</p>
+<p><span class="host speaker">【小俊】</span>对，嗯。所以linear attention和sparse attention未来的关系，可能是融合到一个统一的框架里面，对吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，对。</p>
+<p><span class="host speaker">【小俊】</span>：因为我觉得线性attention和sparse attention，它其实没有什么竞争关系吧。我觉得线性attention的竞争对手，可能更是sliding window attention嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对，像比方说GPT-3，他那个论文里面提到的那个全局混sliding window。那sliding window的话，如果让线性去取得这个sliding window，能够让它更好的话，那未尝不可呢，对吗。</p>
+<p><span class="host speaker">【小俊】</span>：所以你觉得怎么把linear attention和sparse attention能够做更好的结合？现在有人在探索这件事吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：嗯，工业界的话我觉得，就我所知，我应该没有看到有人在同时去结合sparse attention和线性attention。但学界有一些工作还是有一些这方面的探索的，就是有一些层用sparse，有些层用linear attention。</p>
+<p><span class="host speaker">【小俊】</span>：所以DeepSeek选了sparse attention，Gemini选linear attention，这其实可能也是阶段性的，对吧？他可能未来大家会探索一条新的路，就是把两者都结合，现在也不是非此即彼的关系。</p>
+<p><span class="guest speaker">【杨松琳】</span>：嗯对。我觉得混合注意力的话，他decoding长度上去之后，问题就是说他还是会被全局注意力的效率把他绑住，后面那个瓶颈就主要在全局注意力的效率上面了。</p>
+<p><span class="host speaker">【小俊】</span>：嗯，对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后像全部都用那种sparse attention的话，他瓶颈可能是在KV cache的管理上面，因为他还是不省KV cache嘛。所以长度上去之后，就可能要做很多各种各样的KV cache压缩的工作。两者都还是有各自的问题的。</p>
+<p><span class="host speaker">【小俊】</span>：他们的结合，比如说可能是不同的层用不同的attention吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得最好的结合的话，就是把混合注意力里面的全局注意力换成sparse attention。我觉得理论上，只要sparse attention他能选得准的话，他是完全可以取代的。</p>
+<p><span class="host speaker">【小俊】</span>OK，选得准选不准的核心瓶颈在哪啊？</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得就是学习难度吧。像sparse attention的话，如果你从头开始训练，他可能那个T都不太准，然后他可能学着学着就选不准那个block了。他学会选block还是挺难的，他有各种那种稀疏程度的问题吧。像sparse的话他经常就会有这种问题。然后像蒸馏的方式的话呢，他其实就是已经让一个信号——就是全部都是sparse attention的一个teacher model——来蒸馏一个他那个token的选法。那这个从学习上面来说也是make sense的，就可以选得非常好。</p>
+<p><span class="host speaker">【小俊】</span>你觉得Kimi这个工作，他相比年初的MiniMax M1的工作，他的进步在哪里啊？</p>
+<p><span class="guest speaker">【杨松琳】</span>他主要就在于线性注意力那个模块，他会好很多的。就像我之前说嘛，Lightning Attention给人的感觉就像一个两年前的工作，还停留在right night的那个版本。然后像这两年的话，我觉得线性注意力还是有很多发展的，然后这些发展我觉得都是work的。就比方说，千问和Kimi都发现就是这两年有一些进步，比方说那个门控，比方说那个data，这些都是有用的。所以把这些最新的进展融合进来肯定是更好的嘛。然后像Kimi甚至在之前工作的技术上面，还新开发了一个KDA，让他的模型能力会更强。</p>
+<p><span class="host speaker">【小俊】</span>对。然后另外的话，他还有其他不同吧？比方说MoE的话——</p>
+<p><span class="guest speaker">【杨松琳】</span>像Kimi他应该用的是fine-grained MoE嘛。</p>
+<p>---</p>
+<p>> **编者注：**</p>
+<p>> - "right night"疑为ASR误识，原词不确定，保留待核。</p>
+<p>> - "divsec"、"dsa"等专有名词/缩写未能确认，已在上下文中略去或保留，请人工复核。</p>
+<p>> - "翻櫃moe"已还原为"fine-grained MoE"。</p>
+<p><span class="host speaker">【小俊】</span>：然后 M1，M1 我记得他那个 MoE 好像还比较粗吧，他还没有用到这么细粒度的 MoE 嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。</p>
+<p><span class="host speaker">【小俊】</span>：所以就是有很多种可能性。那如何做一个公平的比较——比较一下 Linear Attention 和 Sliding Window Attention？</p>
+<p><span class="guest speaker">【杨松琳】</span>：嗯，Sliding Window Attention 和 Linear Attention 做公平比较的话，我觉得可以有两种。一种的话，比方说控制它的 state size。就是 Sliding Window 的话他有 KV Cache 嘛，他有 KV Cache 的话呢，因为他是滑窗，所以他那个 KV Cache 的上限是被锁住的。这样的话呢，我们就可以把他这个 KV Cache 的上限、他的这个 size，当成 Sliding Window Attention 他的一个 state size。然后 RNN 的话呢，他有 RNN 的那个 state size 嘛，他有那个状态数。如果这两个东西大概在一个量级的话呢，我觉得就是一个公平的比较吧。</p>
+<p>因为像 decoding 的时候，Sliding Window 和 RNN，decoding 基本上都是一个 memory-bound 的过程嘛。所以只要他的这个 state size 差不多，那 decoding 的效率就不会差太多了。因为 memory-bound 的话呢，主要就是看他读多少 state 嘛，只要他们这个 state 差不多大，那 decoding 的效率基本上就会差不多。</p>
+<p><span class="host speaker">【小俊】</span>：对。说到算法的演进啊，从最早的 Transformer 到 MoE，然后到现在大家探索 Linear Attention 或者 Sparse Attention，这种渐进式的创新，你觉得优化的最终目标可能是什么？然后最终可能形成的算法共识会是什么样的？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得这些优化基本上都体现在——给你相同的 FLOP，你怎么去更好地利用这些 FLOP，然后取得更低的 loss。</p>
+<p>像 MoE 这个技术，前两年可能比方说 2023 年的时候都在传 GPT-4 用了 MoE 嘛，但也有很多地方不太敢跟进。然后像现在的话，MoE 基本上已经变成一个显学了，就是每一家都会做这种 fine-grained 的 MoE 嘛。</p>
+<p>现在 MoE 其实也是一种——可以想象成更加高效的 FFN 的一个替代品。他可以更好地去扩大那个 FFN 的参数量，同时又保证 FLOP 不变。这样的话，付出相同的 FLOP，他能在训练里面取得的 loss 就会越低，对嘛。这就是一个点。</p>
+<p>我觉得 MoE 可能是近几年在架构方面突破最大的一个方案。</p>
+<p><span class="host speaker">【小俊】</span>：对。那下一个突破点可能就是在……</p>
+<p>以下是整理後的對話稿：</p>
+<p>---</p>
+<p><span class="guest speaker">【杨松琳】</span>：因為 Transformer 就兩個模塊嘛，一個 FFN，一個 Attention。現在 FFN 基本上已經雕成了這種 Fine-Grained MoE 的形狀嘛，然後 Attention 我覺得大家也是可以來雕一下的。</p>
+<p><span class="host speaker">【小俊】</span>：對，就是 why not。</p>
+<p><span class="guest speaker">【杨松琳】</span>：對。這樣的話，比如說在推理成本下面，付出相同的 FLOPs，他可能取得的 loss 也會更低嗎？</p>
+<p><span class="host speaker">【小俊】</span>：對，我覺得這兩套思路都是要——就是減少 FLOPs，然後能夠讓他……像 FFN 的話，他減少 FLOPs，他就可以去用更大的參數量、更大規模的一個模型嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>：對，就比方說你總參數量就可以堆高，因為你這個 FFN 的算力減少了嘛。大家都知道，就是在大規模訓練下面，FFN 的那個計算是主導的嘛。然後把它換成這種 Fine-Grained MoE 的話，他其實是能降低很多很多這種 cost。</p>
+<p><span class="host speaker">【小俊】</span>：對。然後 Attention 他 scale 的，就主要不是參數量，他 scale 的就是那個 context 的 window size 嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>：對。然後如果這個 Attention 的 FLOPs 在推理成本下面能夠把它打下來的話，那我們就是做那種推理時的生成啊——比如說你有很多 agent，讓他去處理很多很多 workflow，然後有很多很多 context 給他來做，這樣子的話他也會 benefit 於更大的這個 context window。</p>
+<p><span class="host speaker">【小俊】</span>：對。如果把模型的架構比如說比作大腦的結構，你覺得 MoE 和 Attention 他們分別代表的是大腦的什麼組件啊？能這樣去形象化地去理解嗎？</p>
+<p><span class="guest speaker">【杨松琳】</span>：像 Attention 的話，他應該就相當於 working memory 嘛，就是那種工作記憶。然後像 FFN 的話，就有點像那種……我忘記人的大腦存那種信息的那種——還蠻體？對，可能就是那個結構，是用來存儲信息、存儲過去信息的。像 FFN 他基本上會被看成是一個鍵值堆的一個關聯網絡嘛，他可以記下很多很多這種 knowledge。對，就像這種 world knowledge 都會被寄存到這個 FFN 裡面——就是一些 world knowledge 會存下來。然後 Attention 的話，就是比如說你在一個新的場景，然後你遇到新的這種 stimuli，然後你會讀到新的 context，然後他會在這個 context window 裡面動態地來處理這些信息嘛。那就很像我們人的工作記憶——working memory，對，他跟即時性是綁在一起的。</p>
+<p>---</p>
+<p><span class="host speaker">【小俊】</span>：对对对。嗯，当现在数据遇到瓶颈，数据的瓶颈比较明显的时候，是不是算法的创新变得更重要了？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得是的。因为你要在有限的数据里面去压缩更多的智能。我觉得之前的话，比方说你数据一直能 scale 的话，你谈这个 data efficiency 就没有什么特别大的用途嘛，因为大家睁开眼睛加数据就行了，就让模型继续 scale up，然后继续加数据，所以大家都不需要去动算法了，大家只需要买卡就行了。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后现在如果有这种数据墙，还有这种算力墙的话，那可能最终还是要回到算法这种本质的东西上面来。我觉得这些东西都是缺一不可的嘛，就比方说像 data、像算法、像算力，就是三驾马车，来驱动整个人工智能的发展嘛。</p>
+<p><span class="host speaker">【小俊】</span>：对。然后我记得之前像 OpenAI 的 CTO，她也说，就可能在这个节点上面，算法研究的重要性可能会被重新提高嘛。对，如果你记得那个采访的话，她应该是这么说过的。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。</p>
+<p><span class="host speaker">【小俊】</span>：你觉得现在的 Transformer 架构，它的天花板是什么呀？</p>
+<p><span class="guest speaker">【杨松琳】</span>：它的天花板啊。我觉得还是先把 efficiency 的问题解决掉吧。因为现在还没有解决掉 efficiency 的问题嘛，它在处理很长的上下文方面还是有一些局限性嘛。所以大家会做很多上下文工程呀，做一些 RAG 啊，来通过一些其他的方式来解决这些问题嘛。但如果你把这个上下文的问题解决掉的话，那 RAG 这套技术都不需要了嘛，你直接把它放到上下文里面做，硬 context RAG 就行了。然后我觉得天花板的话，就先看看能不能把全局注意力机制给干掉吧，这是第一点。</p>
+<p><span class="guest speaker">【杨松琳】</span>：因为他确实是阻止这个 contest window 继续 scale up 上去的一个主要瓶颈嘛。所以这个瓶颈我觉得是早晚都要把它弄掉的，这个是第一点。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后第二点的话呢，可能就是 continue 能力嘛。然后像现在这种 transformer 架构，还是没法做 continue 能力的嘛。然后之后 continue 能力让 AR 自己学习啊，这种……甚至大家不都想把 pre-training 这个地方变成直接从 RL 开始，让这个模型直接从 0 开始学，不给它喂这种 pre-training data 嘛。像这种新的方式，可能就是之后的这种探索嘛。</p>
+<p><span class="host speaker">【小俊】</span>：对。那如果一个研究员问你啊，如何把 linear attention 的 transformer scale up、继续扩展，你觉得呢？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得 scale up 应该是没有什么特别大的问题吧。然后我觉得可能还有一点就是，那些配套的 infra 设施还是需要继续打的。像 flash linear attention 只是提供了一些 Triton 的一些可能，基本上就是可以凑合用，但是它的效率肯定不是最优的，因为它是 Triton 写的嘛。所以如果有志向投入这个领域的，比方说一些公司，或许可以花一些精力去优化这些，对继续 scale up 上去是有好处的。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后像 infra 那边的支持，我觉得现在已经在逐渐变多了。就比方说像半年前，我参加 MiniMind 的一个原著讨论那样的东西嘛，当时主持人是金贤老师。金贤老师问我这个领域除了瓶颈是什么，我当时说是 infra 的配套没有跟上。然后当时金贤老师还觉得挺意外的，以为我会回答一些别的东西。</p>
+<p><span class="host speaker">【小俊】</span>：对，其实实际上就是这样子嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得算法层面，就比如说像经典的那些进展，已经可以去大规模地来试了嘛。比方说 RWKV、Mamba 和 xLSTM，这些都是可以大规模直接试的。然后后面 deploy 的这种跟进的话，可能就更多是在这种配套设施上。因为这两个模型开源了之后，开源社区的支持力度也挺大的嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>像之前，比方说 SGD，他都不支持这种 hybrid model 做 inference 吗？然后现在就是趁这个机会，就可以把前几个 dense 啊，然后像 MiniMax M1 这些模型，就是加一些这种推理的推理引擎的这种 support 嘛。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得这是一个良性循环的一个领域，良性发展的一个过程嘛。就像这些做基模的厂商，他们去做一些比较 promising 的结果，然后把它发出来开源，把这些开源的模型发出来，然后那些做推理引擎的人就会有很多动力来想办法支持这些东西嘛。然后当这些 infra 的配套更好的时候，比方说别的公司可能觉得像 MiniMax 的 infra 那个生态太太差了，就是可能就算做出来，这个生态不好，他实际上 deploy 的成本也很高嘛。但现在如果只要这个生态做起来了，就会有一个良性循环的作用嘛。</p>
+<p><span class="host speaker">【小俊】</span>我觉得……你觉得现在中国的算法创新相对于硅谷来说，是差不多、更强，还是落后的？</p>
+<p><span class="guest speaker">【杨松琳】</span>啊，我觉得国内算法创新肯定是更强的。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，主要是 in terms of 架构的话，那肯定是国内更强的。我觉得这也是有一些生态 deploy 不同吧。就比方说国内没有那么多卡，他们其实对 efficiency 的要求是更高的嘛，所以他们更有动力来尝试这些更高效的 MiniMax 这样的变种。然后像硅谷有一些公司基本上就是卡太多了，他们就……</p>
+<p><span class="host speaker">【小俊】</span>反正三驾马车你总得有一量跑得快一点。</p>
+<p><span class="guest speaker">【杨松琳】</span>对对对，他们有那个算力，也能凑合跑嘛。</p>
+<p><span class="host speaker">【小俊】</span>对。脑子长怎么样无所谓，反正我先把算力推上去。</p>
+<p><span class="guest speaker">【杨松琳】</span>对。然后我觉得硅谷这边，感觉美国的公司会更注重优化一点。</p>
+<p><span class="host speaker">【小俊】</span>对，就像 optimization。对，就比方说优化器。</p>
+<p><span class="guest speaker">【杨松琳】</span>对。</p>
+<p><span class="host speaker">【小俊】</span>像国内公司也感觉在逐渐在用嘛，就比方说像 Kimi，他也是最早吃这个螃蟹的一个地方。</p>
+<p><span class="guest speaker">【杨松琳】</span>对。然后给我的感觉就是，美国他们对优化器的投入明显是比国内对优化器的投入要大一些的。</p>
+<p><span class="host speaker">【小俊】</span>对。Kimi 的 MiniMax 的效果跟去年 DeepSeek Sparse Transformer 的效果比，哪个更强呀？</p>
+<p><span class="guest speaker">【杨松琳】</span>啊，我觉得效果对比的话，需要有个地方来做一个 apple-to-apple 的比较嘛。因为这个东西非常 tricky，不太好比嘛。然后我觉得不同的地方训出来不同的……嗯，他可能就是完全不能比了，因为他的训练架构啊、data recipe 啊、优化方案完全都不一样，就没有一个 apple-to-apple 的比较嘛。</p>
+<p><span class="host speaker">【小俊】</span>对。像 Kimi MiniMax 他最近这个 report，他还有一点就是说……</p>
+<p><span class="guest speaker">【杨松琳】</span>：他有一个 Apple-to-Apple 的，跟 Full Transformer 的一个比较。对，他是有一个 Apple-to-Apple 的比较的，但他没有 Apple-to-Apple to Sparse Transformer 的一个比较。要是有一个地方能做此事，来 Apple-to-Apple 比一下，让大家能更好地知道，就更好了。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：但现在因为没有人再做一个 Apple-to-Apple 的比较嘛，所以这个问题我也不知道哪个会更好。</p>
+<p><span class="host speaker">【小俊】</span>：哦，这很有意思啊。为什么 Kimi 不做这个比较？</p>
+<p><span class="guest speaker">【杨松琳】</span>：他比较的是 Full Transformer。他在摘要里就写了说，他们是第一个验证了新的、超越 Full Transformer 的混合 Linear Transformer 架构。嗯，可能还是资源有限吧。就如果就那么多卡的话，那可能先投入一个路线去验证。对，然后如果验证出来了，再去投入另外一个路线，看看有没有可能——比方说把全……就是把 Linear 里的 T 换掉嘛。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：感觉就是没有这么多卡来同时跑一些不同方案的对比嘛。然后像 Google DeepMind 的话，很多东西都没有披露嘛，所以你也不知道他们有没有跑一些 Full Transformer 的比较。</p>
+<p><span class="host speaker">【小俊】</span>：对。那你看那个 Kimi Linear 的论文，你觉得还有哪些是值得大家关注的？</p>
+<p><span class="guest speaker">【杨松琳】</span>：前面说的就是这个线性注意力的模块嘛。对，然后还有可能就是全局注意力里，用 RoPE 还是用 NoPE 的一个比较吧。像 Kimi 他选择的是用 NoPE，然后像 Qwen3 MoE 的话，他选择的是一个 Partial RoPE——对，他就是 25% 是 RoPE，75% 是 NoPE。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：我觉得在这种混合注意力里面，大家都在砍 RoPE，但是看大家砍多少嘛。像 Qwen3 MoE 砍了 75%，然后像 Kimi 砍了 100%。然后像这种长度外推……感觉看起来的话，RoPE 在这种 Hybrid 架构里面可能会比较阻碍长度外推。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后这个地方其实也没有共识嘛，就是大家也不知道——有些还是用 RoPE，有些用 NoPE，有些地方还用 Partial RoPE。我觉得这个地方还是没有共识的。</p>
+<p><span class="host speaker">【小俊】</span>：对。嗯，提一个题外话——</p>
+<p><span class="host speaker">【小俊】</span>你有关注最近 DeepSeek 的新工作吗？就是 DeepSeek 发了一个 OCR 的 paper。大家都说，其实数据撞墙的时候，还是有很多书籍啊、PDF 里面有大量数据的，所以他们做这个 OCR，可以帮他们更好地洗一些 data 出来，然后来做 pretrain。另外的话，他们说是用 OCR 来做这种 context compression。这一点我觉得是一个有意思的方向，但我不确定这个方案怎么样。</p>
+<p><span class="guest speaker">【杨松琳】</span>对。</p>
+<p><span class="host speaker">【小俊】</span>千问的工作你有参与没有？就千问 3 那次。</p>
+<p><span class="guest speaker">【杨松琳】</span>啊，我就基本上那次吧，就是他们要是碰到什么问题，我就可以帮忙打一下。不参与他们的模型训练什么的，就是如果他们有一些学术上的讨论，我是会跟他们讨论的。对，我跟千问 3 训练的那几个同学都还挺熟的。</p>
+<p><span class="host speaker">【小俊】</span>那个 MiniMax 参与没有？</p>
+<p><span class="guest speaker">【杨松琳】</span>没有。</p>
+<p><span class="host speaker">【小俊】</span>OK。所以你参与的是——</p>
+<p><span class="guest speaker">【杨松琳】</span>如果我参与了，他们应该不会用这个方案。我会觉得这个方案在"开倒车"。</p>
+<p><span class="host speaker">【小俊】</span>OK，我觉得你又说了很好玩的话。你总是在用"把这个架构玩一下"或者"雕一下"这种词。这个是研究员之间的一种文化吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，我觉得"雕"这个字好像还挺常见的吧，就是有种"雕花"那种自嘲的说法。</p>
+<p><span class="host speaker">【小俊】</span>哦，就是说——杨植麟姐说不要瞎雕花，是吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>现在没办法，效率不够，数据也有限了，所以只能雕。但是我觉得雕架构还是挺有用的嘛，像 DeepSeek MLA 那个雕出来之后，大家都已经成为共识了吗？</p>
+<p><span class="host speaker">【小俊】</span>基本上已经形成共识了，就是可能一般会用 DeepSeek MLA 的方案。</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，对。如果在它之前，大家可能也会说——可能在雕 MLA 嘛。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>哦，然后感觉"雕"已经变成一个常见的形容词了。</p>
+<p><span class="host speaker">【小俊】</span>形容……我觉得它不是一个贬义词了。</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得它是一个就是把一个模块打磨到更好的意思。对，如果数据的scaling能够非常突出的话，其实没有必要"雕"，对着数据就好了。当数据还很少的时候，比如说机器人领域现在就是数据没什么数据啊，那只要加数据，就能有显著的效果提升，那就没有必要去做模型层面的创新。</p>
+<p><span class="host speaker">【小俊】</span>对，这是一点吧。所以Robotics嘛，最应该做的应该还是先把数据这个问题搞定吧。</p>
+<p><span class="guest speaker">【杨松琳】</span>对，然后数据搞定之后，再回来看这种efficiency的问题也不迟嘛。</p>
+<p><span class="host speaker">【小俊】</span>对，嗯。你做AI research，驱动你的是什么？哦，真正……你是怎么进入AI这个行业的？</p>
+<p><span class="guest speaker">【杨松琳】</span>AI这个行业的话，就是本科的时候对machine learning啊、deep learning啊挺有兴趣的。然后当时master在上课，念那个NLP嘛，那个时候就已经进入AI了。然后到了二二年、二三年，就是ChatGPT这一波，large language models蓬勃发展嘛，做NLP的人基本上都来做large language models了嘛。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后做AI，我觉得现在会更有意思一点，比之前更有意思。因为之前可能大家还是在分开来做嘛，然后现在可能都比较unified了，会比较follow一些更加通用的问题了。就不需要去操心某些特定的task，因为你只要训练一个很好的基模，然后对不同的task都可以用嘛，你无非是post-train的时候要注意的地方不一样。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后现在的话，感觉做这些东西，可能能看到更多的影响力嘛。然后这一点感觉还是挺——就是看到自己开发的东西被大家用，还是挺开心的嘛。</p>
+<p><span class="host speaker">【小俊】</span>：你过程中有遇到过什么样的挫折没有？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我感觉我读PhD好像这些工作都还挺顺的，没啥。</p>
+<p><span class="host speaker">【小俊】</span>：是吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>：对，然后感觉这些工作都还挺顺的吧。我觉得还是因为，可能是读PhD之前就花了半年的时间来调研这些东西，然后可能对这个领域的理解会深很多。然后就深入跟这个领域来做，其实问题也不是很多吧。因为对这个领域非常熟，碰到什么问题大概也知道怎么去解。</p>
+<p><span class="host speaker">【小俊】</span>：读PhD之前花半年去调研，这个是做的什么样的工作？是入学之前的半年是不是？</p>
+<p><span class="guest speaker">【杨松琳】</span>：嗯，就之前申请完之后有半年嘛，有半年可以自由的时光。然后当时基本上就是在调研这种架构的paper嘛。然后当时读了很多比较老的paper，比方说像Deltanet，它最早是2021年——就是那个线性注意力机制的那个paper。然后当时我就对这个工作有印象嘛。</p>
+<p>然后后面，就那年年底嘛，做完那个Gating Linear Attention之后，发现这个领域的话，大家会对那个in-context retrieval——就是从前面的文章里面去做一个retrieval这个task——会感兴趣。然后这个就让我一下子联想到了那个2021年的一篇工作了。</p>
+<p>因为之前对这个整个领域把握得非常通透嘛，所以我知道，如果领域里其他人关心这个问题的话，我应该从什么角度去切入。然后我也知道前面工作有什么问题嘛，比方说——</p>
+<p><span class="guest speaker">【杨松琳】</span>2021年做DETRnet的时候，他是没有heart efficiency保证的。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后我后面交完那个工作之后，做DETRnet就知道，DETRnet是一个很好的模型，但他的缺点就是现在大家还不能大规模用起来。然后如果我能开发出一个算法，能把它scale up，那就是一个非常有意义的工作。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后我大概就是带着这一套逻辑去做嘛，可能也是运气好吧，就正好能推出一个能够把它scale up的算法。然后后面做Google Data那边的工作，也是因为当时发现DETRnet在很多task上面还是打不过Mamba 2。然后我当时就觉得，打不过就加入嘛——那我就把Mamba 2的那个gating拿过来，把DETRnet再加回去，这样子a加b，变成一个Gated DETRnet。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得我做的东西，就是会看这个领域需要什么样的工作，做什么样的东西会带来更多领域的影响力，还有业界的影响力。然后就是，如果你很清楚你要做什么的时候，其实不会遇到什么挫折。技术上的那种challenge，我觉得都是有办法搞定的。更大的challenge是你不知道你要做什么，不知道做什么东西是有用的——我觉得这个才是最大的challenge。</p>
+<p><span class="host speaker">【小俊】</span>所以你的核心是从历史中学习了很多，对吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得我还是挺喜欢看最早的那些paper，我觉得那些paper写得都挺好的。我管这个叫做"考古"。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="host speaker">【小俊】</span>：因為我就喜歡考那些古代的paper。就古代的話，可能要……一年也算古代嗎？</p>
+<p><span class="guest speaker">【杨松琳】</span>：就能現在……一年前的paper叫老paper，那五年前的paper，那可以叫做古代的paper了。</p>
+<p><span class="host speaker">【小俊】</span>：對。那半年你讀的最老的paper到什麼時候？最近半年嗎？就是你調研的那半年。</p>
+<p><span class="guest speaker">【杨松琳】</span>：哦，那半年……可能就是，嗯，讀到大概2011年的文章吧。</p>
+<p><span class="host speaker">【小俊】</span>：讀了多少？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我覺得，我可以說這個領域裡面的文章我基本都讀過一遍。</p>
+<p><span class="host speaker">【小俊】</span>：對，這個做到的人很少是吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>：嗯，對。我覺得不同的人有不同的resource，但我覺得，就一定要把這個領域裡面值得看的文章全部都看一遍。</p>
+<p><span class="host speaker">【小俊】</span>：對，嗯。你為什麼在AI的眾多領域分支裡面，你喜歡的是架構？</p>
+<p><span class="guest speaker">【杨松琳】</span>：因為我比較喜歡做算法嘛。然後當時覺得，那Sequence Model，就可以看出那些東西是值得做的。然後就想做一些比較通用的，整體都是對這種Sequence Model有用的東西。我可能捋一下自己的興趣，然後發現……還正如最開始說到嘛，就像DeepMind Research，他們有很多博客。然後主要還是自己喜歡做算法嘛，然後就發現這個領域很適合我來做的。</p>
+<p><span class="host speaker">【小俊】</span>：對。你數學是不是很好？</p>
+<p><span class="guest speaker">【杨松琳】</span>：應該還挺好的。</p>
+<p><span class="host speaker">【小俊】</span>：對，嗯。為什麼這篇論文裡面有這麼多公式？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我覺得這些數學都不是很難的，都是一些矩陣的運算、矩陣的懲罰啊這些東西。然後像線性遞推，它有解析形式的話，它會有一些recurrence，會有一些線性遞推方程那些公式嘛。然後並行的話呢，可能就是……並行確實數學會比較多一點，那種比較tricky的。</p>
+<p><span class="host speaker">【小俊】</span>：對，對。它這個論文裡面顯然比加法論文的數學公式是要更多的，因為……</p>
+<p><span class="guest speaker">【杨松琳】</span>我觉得线性注意力它主要就是一个玩矩阵变换的东西嘛。它可以把一个平方的东西变成一个线性的，然后它就是玩这种矩阵变换。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>然后它从recurrent把它变成trunk，它们都是等价的嘛，但它们都涉及到很多这种矩阵变换。所以它数学多一点，我觉得也很正常吧。</p>
+<p><span class="host speaker">【小俊】</span>你刚才提到，你读博士前半年做了很多算法的考古，能不能给大家讲讲，算法是怎么一步步演进到今天的这段算法历史？</p>
+<p><span class="guest speaker">【杨松琳】</span>那我从transformer开始讲吧。就transformer换它，感觉可能就三个主要模块吧。一个就是注意力机制，然后另外一个是位置编码，然后最后就是FFN。</p>
+<p>这一开始那几年，我感觉可能架构research非常多吧，然后有一些架构的改进也确实被用到了今天。比方说像相对位置编码，比方说像RoPE。这开始的话，transformer的话它是绝对位置编码，然后像今天基本上都改成这种相对位置编码了嘛。</p>
+<p>然后像MoE的话，我觉得可能也是从2021年左右就开始发展了，然后可能中间有段时间大家可能就不怎么信MoE嘛，然后后面又发现，比方说像DeepSeek把MoE做通了，然后大家又回来重新做MoE。然后现在MoE应该就是大家都会用的东西嘛。</p>
+<p>然后像注意力本身的话，注意力的这种变种可能就更多了。像前面说到2020年前后，注意力的变种就非常非常多，然后其实也主要就是两种变种嘛。第一种就是线性注意力，然后第二种的话就是稀疏注意力。</p>
+<p>线性注意力的话，他们就会搞很多那种kernel method to approximate softmax attention。然后在今天来看，我觉得这是一个非常错误的方向吧，我觉得就不应该去用kernel method去估计这些softmax attention嘛。然后有一些好工作的话，可能就会因为没有follow-up……</p>
+<p><span class="guest speaker">【杨松琳】</span>然后被埋没在文献海里面。比方说像 Data Night 这个工作，我前面也说他 2021 年就有了，然后到他入那个东西，可能后面几年就根本没有人 take it seriously，就是没有什么 follow-up work。</p>
+<p>然后从时间的眼界上来说，从演化来说，可能有一些技术，比方说像这种稀疏度的这种遗忘，可能很多年前就有了。比方说像这个稀疏度的这种 DK，至少一样，没有 RP 的话，2022 年他可能就有一篇工作了，然后最早的话我可以考古到 2016 年。</p>
+<p>但后面的话，比方说 Ran 2023 年，他反而用的是一个遗忘速率跟稀疏度的一个 DK。所以我觉得可能就是之前的技术不能更好地传承下来吧。</p>
+<p>然后我又比较喜欢把所有之前的技术全部重新审视一遍，然后选一些我觉得 make sense 的技术来做。这样的话，比方说像 Delta Rule 这个技术又可以重现光芒吧。</p>
+<p><span class="host speaker">【小俊】</span>对。</p>
+<p><span class="guest speaker">【杨松琳】</span>但如果没有我来 follow up 的话，可能就不好说了，可能这一套技术路线就会隐藏在文献海里面。</p>
+<p>然后像 Sparse Attention 的话，他们最早可能就做一些 static 的 Sparse Attention，像 Longformer 啊、Big Bird 啊，他们会有各种各样的 Sparse Attention。然后好像后面就逐渐收敛到用 Sliding Window 了。然后可能近几年的话，会有一些不一样的东西出来，就是早几年比较少，但是最近有比较多的，比方说像动态稀疏，像 KV Cache Mobile 啊，然后 Diverging 的这种。</p>
+<p><span class="guest speaker">【杨松琳】</span>：Sparse attention 都属于动态系列。</p>
+<p><span class="host speaker">【小俊】</span>：对，然后总的来说，我感觉整体上海还是在不断进步嘛，然后可能整个发展就是需要有一些技术 rethink 几次。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对，然后很多的 sparse attention 感觉这个发展还是会有一些……有点螺旋上升的味道在里面吧。</p>
+<p><span class="host speaker">【小俊】</span>：对。其实历史中已经有很多的工具，但是今天我们需要拿哪些工具来应用、推动今天的算法进步，其实是一个很关键的事儿。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对的对。我觉得其实很多历史上的算法，他其实是很先进的，但是可能当时的同行没有意识到这个工作的价值，然后那个工作就被埋没了。然后也有可能就是那个工作的配套——比方说那些开源代码——做得太难了，然后其他人想 follow 也没法 follow 嘛。</p>
+<p><span class="host speaker">【小俊】</span>：对，所以啊。</p>
+<p><span class="guest speaker">【杨松琳】</span>：所以总的来说，我觉得如果今天做工作的话，可能的话，比方说像我就会把代码做得让大家好用，这样这套技术肯定能把它流传下去。然后对于别人之前的工作，我会找一些我觉得 make sense 的工作，然后让他尽可能地看看潜力有多大吧。</p>
+<p><span class="host speaker">【小俊】</span>：对。然后又说回到架构里面的算法的话，因为算法的变体太多了，架构的话肯定还是需要很多算法来试。然后有很多算法可能只在小规模下面 work，到大规模就不 work，这个是非常常见的。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。然后可能比方说像今年国内公司又对开源重新有兴趣，那可能今年大家见到架构的开源工作会更多一点，变化相较去年来说，大家会觉得架构的变化比去年多很多吧。</p>
+<p><span class="host speaker">【小俊】</span>：你的 Delta Rule 是什么给你带来的灵感？</p>
+<p><span class="guest speaker">【杨松琳】</span>：就是 2021 年那个工作，那个工作是他们提出来的嘛。然后我就想了一个并行算法，其实就挺类似于 Flash Attention 之于 Softmax Attention——就是一个算法能够让他在硬件上高效地实现。就是如果没有 Flash Attention，那 Softmax Attention 也走不到今天嘛。然后同样，如果没有那个并行算法的话，Delta Rule 肯定也不能走到今天。</p>
+<p><span class="guest speaker">【杨松琳】</span>：大概就是这样一个关系。我觉得我做research，可能比较喜欢从实际上的硬件的这种契合力来研究，就是看一个算法有没有潜力。我会来分析这个算法的并行潜力有多大，然后它的scalability会有多大。然后我会在历史的文献海里面找出一些在machine learning上面make sense，同时我又能想办法把它并行化的一些算法来玩。这是我做research的思路。</p>
+<p>我觉得总的来说，就是在machine learning上面make sense，然后这个算法又可以有并行的算法——就是这样的算法，才能在这个年代被用到。因为you know，在这个大模型的年代，scalability左右一切，你肯定需要有一些能够scalable的算法。然后如果一个算法更make sense，比方说像Delta，我觉得他们这个算法就非常make sense，然后同时scalability又比较好的话，那就完全有可能在今天这个时代带来一些不一样的架构吧。就比方说像Qwen3、Nexus和线性attention，就已经让我们带来了一些新气象。</p>
+<p><span class="host speaker">【小俊】</span>：对，就是新架构领域。我前几天做了一个论文的博客，就提到transformer是这一代硬件的天选架构。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对啊，transformer他肯定是天选嘛。比方说当时设计transformer，就是为了让硬件跑得快而设计出来的嘛。像FFN那肯定不用说了，都是大矩阵乘法，那肯定快嘛。然后像attention，其实在attention之前，大家是用LSTM之类这种不能并行的模块来做的。像LSTM，硬件加速就更难搞嘛。然后像attention，就算它是平方的复杂度，复杂度比线性高了一个级别，但是它可以通过矩阵乘法来算出那个output嘛。所以它的硬件契合度比线性要好很多，所以大家会宁愿去用理论复杂度更高的transformer，也不会去用理论复杂度更低的LSTM，因为它们这个硬件契合表现完全不一样嘛。</p>
+<p>所以我觉得算法整体的发展，就是要找到这些硬件契合、然后又更好的一些算法吧。因为transformer，它不但attention硬件更契合，它确实也解决了一些长程依赖关系的问题嘛，所以它才会——</p>
+<p><span class="guest speaker">【杨松琳】</span>流行得这么开嘛。像今天的华丽亮诞生，要重新登上舞台，那肯定也离不开这一系列的发展嘛。就比方说，把它分成创可的那些变形的算法呀，然后他更强的那些设计啊，能让他从 Machine Learning Performance 这个角度来说更加有 sense。这些才是能推动他发展的原动力嘛。</p>
+<p>所以我还是非常主张，就是来做一些非常 principled——就是从 Machine Learning Principle 的角度来说，他是很 principled、很有……就是 mathematically grounded，从数学上他是有 sense 的嘛。就比方说 Diffusion，他从数学上有 sense；然后同时，也要结合 hardware 的一些模型。</p>
+<p>对，因为我觉得这模型还是肯定要结合当前硬件的。就会有些人说呀，"那我设计一个算法他足够好，那硬件公司来帮我优化呀。"那怎么可能呢？你这算法，你是金子做的还是银子做的，能让硬件公司天天帮你优化呀？那是不可能的嘛。</p>
+<p>那你肯定要首先让你的算法先去满足一些非常通用的原则嘛。像 hardware 他有一些 principles，像 memory hierarchy 这种东西；然后像矩阵乘法，也有这种东西。就是你不论看不同类型的 hardware，他基本上都会遵循这种原则嘛，就有一些硬件比较通用的 principles。</p>
+<p>对，你设计算法你可能没必要去专门——比方说针对 H100 去优化——但我觉得做算法至少要去满足这些硬件比较通用的 principles。要不然我觉得做的算法，在当今这个 scalability 主导的场景下面，基本上就是没有什么实际价值的，就纯属自娱自乐吧。</p>
+<p><span class="host speaker">【小俊】</span>嗯，你提到这个理念，这个为硬件有做什么样的优化没有？</p>
+<p><span class="guest speaker">【杨松琳】</span>嗯，Kaparthy 的理念，我觉得他等那个算法还是硬件耦合的吧。然后，Kono 的话呢，他现在应该还是张宇写的那个 Triton 的算法嘛，对，就凑合用嘛。对，我相信大家都没有那么多……就是 Kono 优化他是一个非常耗时的工作，对他非常的——嗯，非常的需要时间，要慢慢磨，就要老师傅 Kono 优化慢慢来打磨。</p>
+<p>对，我觉得就是 experiment 迭代的时候，大家用 Triton 写一下凑合用就行了嘛。然后如果他验证出来有用的话呢，后面来补一些 Kono 也是可以的嘛。对，就我猜着他们现在应该……</p>
+<p><span class="host speaker">【小俊】</span>：還在用 Triton 寫 kernel 吧？對。</p>
+<p><span class="guest speaker">【杨松琳】</span>：我不知道他們後面會不會找人來寫 kernel。</p>
+<p><span class="host speaker">【小俊】</span>：從硬件協同的角度，你覺得下一代的算法會這麼嚴謹嗎？</p>
+<p><span class="guest speaker">【杨松琳】</span>：現在我覺得，硬件也就和 transformer 是有一點協同的感覺，就是硬件會變成 transformer 更喜歡的模樣。</p>
+<p><span class="host speaker">【小俊】</span>：對，所以其實對於一些 alternative 來說，是有一些不好的因素在裡面的嗎？</p>
+<p><span class="guest speaker">【杨松琳】</span>：因為現在的架構，大家會發現硬件就是為了去優化矩陣乘嘛，然後讓矩陣乘越快越好嘛。因為 transformer 裡面有大量的矩陣乘嘛，所以硬件就想搞一些快速矩陣乘的東西，比方說像 Tensor Core，然後像 TMA 這種東西。然後像最近的 Blackwell 上面，他有一些專門針對這種矩陣乘、單獨的那種 memory，這都是來優化矩陣乘的嘛。</p>
+<p>所以可能大家會看到，Flash Attention 會越來越快——FA4 嗎？他在 Blackwell 上面會越來越快。</p>
+<p>然後我覺得，既然硬件是這麼 evolve 的嘛，那從設計算法的時候來看，你就必須要設計一些能用矩陣乘法的算法，要不然這個硬件效率肯定是跟不上的。</p>
+<p><span class="host speaker">【小俊】</span>：對。</p>
+<p><span class="guest speaker">【杨松琳】</span>：像 linear attention 他創的算法有個好處就是，他基本上都是一些矩陣乘。當然他還會有一些其他的操作，這個的話可能就是得克服一下。他可能比方說在 training 的時候，可能還是不如 Flash Attention 4 這種在 Blackwell 上面搞笑——</p>
+<p><span class="host speaker">【小俊】</span>：但其實也無所謂，就很多地方也不 care 訓練效率，他只 care 那種 inference 效率。</p>
+<p><span class="guest speaker">【杨松琳】</span>：對，所以我覺得只要訓練的時候能以 reasonable 的速度來訓，然後 reasonable 的速度來 prefill，然後 decoding 快的話，這種架構其實也是有市場的。</p>
+<p><span class="host speaker">【小俊】</span>：對。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然後另外的話，就比如說像——</p>
+<p><span class="host speaker">【小俊】</span>：翻出来了，Amoeba，然后 Sputnik 上这种，嗯，降 flop，然后又能用矩阵乘法。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对，他们都是属于这种类型吗？他们肯定还是要用矩阵乘法的，然后就是想办法把 FLOPs 打下去，通过一些算法上的创新来把 FLOPs 打下去。</p>
+<p><span class="host speaker">【小俊】</span>：对，然后同时保证——这里面有大量的矩阵乘，就一旦一个算法里面基本上都是矩阵乘，那基本上这个算法在硬件上也挺好优化的嘛。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对，因为我觉得这个硬件就是朝着矩阵乘法越来越快的方向在走了。甚至像 H100，矩阵乘太快了，导致那个 softmax 那个 exponentiation 的某一块变成一个瓶颈了。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：然后他们就用一些——FX 的话，他就用一些 approximate 的方法来做那个 exp。</p>
+<p><span class="host speaker">【小俊】</span>：对，这个也挺好笑的，就是矩阵乘太快了。那我们现在还是要去尽量去利用矩阵乘快速的这个性质吧，然后在一些算法上……我觉得像 DeepSeek Sparse Attention，他那个就已经用到了这种性质。我觉得 DeepSeek 是一个非常非常注重硬件和算法协同设计的公司。</p>
+<p>像 DeepSeek Sparse Attention 的话，他会有一个叫 index 的东西，他就是用 FP8 来算这个 attention score，因为他不需要 softmax，他只需要算那个 logit，然后来做 top-k，来选 score。所以首先他就是 FP8，然后他又可以把那个昂贵的 exponential 操作把它去掉。这样的话，他基本上就是一大堆矩阵乘，所以他那个 index 会非常的快。</p>
+<p>这样的话就有可能——能不能用到他们的下一代架构呢？</p>
+<p><span class="guest speaker">【杨松琳】</span>：我也不知道下一代架构是什么。</p>
+<p><span class="host speaker">【小俊】</span>：但这些性质在那里，就有可能可以作为下一代架构的一个 candidate 吗？</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。</p>
+<p><span class="host speaker">【小俊】</span>：相对来说，DeepSeek 和 Keeming，哪个在硬件适配上做得更好？听起来是 DeepSeek？</p>
+<p><span class="guest speaker">【杨松琳】</span>：DeepSeek，absolutely。</p>
+<p><span class="host speaker">【小俊】</span>：OK，那 Keeming 没有把这个作为一个重要的目标，对吧？</p>
+<p><span class="guest speaker">【杨松琳】</span>：不太确定哎。我觉得 Keeming 肯定还是在 scale up 这种硬件上面的东西，但是没有 DeepSeek 那么追求吧。</p>
+<p><span class="host speaker">【小俊】</span>：对。</p>
+<p><span class="guest speaker">【杨松琳】</span>：DeepSeek 我觉得他们非常追求这方面。比方说，这个算法能不能在 FP8 上面跑，之类的。我觉得他们 infra 团队在算法迭代的过程中，话语权应该会比较高一点。</p>
+<p><span class="host speaker">【小俊】</span>：对，我觉得这都是因公司而异的。有些公司 infra 的话语权会高一些，有些公司算法的话语权会高一些。感觉算法经常会搞一些让 infra 头疼的东西出来。</p>
+<p><span class="guest speaker">【杨松琳】</span>：对。</p>
+<p><span class="host speaker">【小俊】</span>：你觉得如果年轻的研究者想要进入注意力机制或者架构算法这些领域的话，你对他们有什么建议？他们应该从哪些地方开始入手？</p>
+<p><span class="guest speaker">【杨松琳】</span>：现在的话……找个公司去实习。</p>
+<p><span class="host speaker">【小俊】</span>：OK，就是跟上。</p>
+<p><span class="guest speaker">【杨松琳】</span>：因为我觉得做架构必须要有算力，没有算力就没法做架构，所以还是先找个机会去实习吧。</p>
+<p><span class="host speaker">【小俊】</span>：好，今天的节目就是这样。这里是《商业访谈录》，是一档由「语言即世界」工作室出品的深度访谈节目。你可以到公众号关注我们的工作室，获取更多信息。我们的公众号是「语言即世界」，Language is World。</p>
+</body></html>
